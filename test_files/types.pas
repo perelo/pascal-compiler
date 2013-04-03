@@ -1,0 +1,18 @@
+program types;
+var
+   i, j : integer;
+   b : boolean;
+   tab : array [0..10] of integer;
+begin
+   i := 3 * 4;
+   b := true;
+   tab[1] := 5;
+   while b do
+   begin
+      if i < j then
+         b := false
+      else
+         i := i + 2;
+   end;
+   write(i);
+end.
