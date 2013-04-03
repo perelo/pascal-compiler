@@ -183,8 +183,8 @@ n_type *sem_n_exp(n_exp *exp) {
         break;
     }
 
-    return type;
     balise_fermante(sortie_semantique, __FUNCTION__);
+    return type;
 }
 
 n_type *sem_varExp(n_exp *exp) {
