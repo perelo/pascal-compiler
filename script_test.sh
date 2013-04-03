@@ -4,7 +4,7 @@
 # script de test pour le projet de compilation
 #
 
-for f in $(ls test_files/*.pas)
+for f in $(ls $1test_files/*.pas)
 do
     echo "compil $f"
     if ! ./compil.run $f /dev/null /dev/null
