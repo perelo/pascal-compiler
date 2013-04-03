@@ -142,7 +142,6 @@ void sem_blocInst(n_instr *instr) {
     balise_fermante(sortie_semantique, __FUNCTION__);
 }
 
-
 void sem_n_l_exp(n_l_exp *l_exp) {
     if (l_exp == NULL) return;
     balise_ouvrante(sortie_semantique, __FUNCTION__);
@@ -443,7 +442,16 @@ n_type *sem_n_appel(n_appel *appel) {
 
     type_fonc = symboles.tab[indice].type;
     balise_text(sortie_semantique, "fonction", appel->fonction);
-    sem_n_l_exp(appel->args);
+    //sem_n_l_exp(appel->args);
+
+    n_l_exp *args = appel->args;
+    n_l_dec *param = symboles.tab[indice].param;
+    while (args != NULL && param != NULL) {
+        assert_types_sont_compatibles(__FUNCTION__, sem_n_exp(args->tete),
+                                                    param->tete->type, NULL);
+        args = args->queue;
+        param = param->queue;
+    }
 
     balise_fermante(sortie_semantique, __FUNCTION__);
     return type_fonc;
