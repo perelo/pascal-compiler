@@ -1,6 +1,6 @@
 program affectation;
 var
-   a : boolean;
+   a : integer;
 begin
-   a := (1 = 2) or true;
+   a := 2;
 end.
