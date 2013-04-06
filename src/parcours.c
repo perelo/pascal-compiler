@@ -511,15 +511,20 @@ void assert_types_sont_compatibles(const char *call_from,
     if (t1 == NULL && t2 == NULL) {
         erreur(call_from, "err : failed to get both types");
     }
-    else if (*op == non &&
-             ((t1 == NULL && t2->type != t_bool) ||
-              (t2 == NULL && t1->type != t_bool))) {
-        erreur(call_from, "err : not can only apply on a single boolean exp");
+    else if (*op == non) {
+        if ((t1 == NULL && t2->type != t_bool) ||
+            (t2 == NULL && t1->type != t_bool)) {
+            erreur(call_from, "err : not can only apply on a single boolean exp");
+        }
     }
-    else if (*op == negatif &&
-             ((t1 == NULL && t2->type != t_int) ||
-              (t2 == NULL && t1->type != t_int))) {
-        erreur(call_from, "err : negation can only apply on a single int exp");
+    else if (*op == negatif) {
+        if ((t1 == NULL && t2->type != t_int) ||
+            (t2 == NULL && t1->type != t_int)) {
+            erreur(call_from, "err : negation can only apply on a single int exp");
+        }
+    }
+    else if (t1 == NULL || t2 == NULL) {
+        erreur(call_from, "err: failed to get one type of op");
     }
     else if (t1->type == t_array || t2->type == t_array) {
         erreur(call_from, "err : no operation possible with array(s)");
