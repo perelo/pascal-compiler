@@ -14,6 +14,7 @@
 #include "parcours.h"
 #include "syntaxique.h"     // fonctions de balise
 #include "dico.h"
+#include "code3adr.h"
 
 void sem_n_l_instr(n_l_instr *l_instr) {
     if (l_instr == NULL) return;
@@ -76,6 +77,7 @@ void sem_affecteInst(n_instr *instr) {
 
     type_var = sem_n_var(instr->u.affecte_.var);
     type_exp = sem_n_exp(instr->u.affecte_.exp);
+    ajoute_ligne(store, ligne-1, 0, instr->u.affecte_.var->nom);
 
     assert_types_sont_compatibles(__FUNCTION__, type_var, type_exp, NULL);
 
@@ -88,12 +90,19 @@ void sem_siInst(n_instr *instr) {
     n_type *type_test = NULL;
 
     type_test = sem_n_exp(instr->u.si_.test);
+    int lignetmp = ligne;
+    ajoute_ligne(jsifaux, ligne-1, 0, NULL);
     if (type_test == NULL || type_test->type != t_bool)
         erreur(__FUNCTION__, "err : \"if\" test must be a boolean");
 
     sem_n_instr(instr->u.si_.alors);
+    code[lignetmp].arg2 = ligne;
     if (instr->u.si_.sinon != NULL) {
+        ++code[lignetmp].arg2;
+        int ligneelse = ligne;
+        ajoute_ligne(jump, 0, 0, NULL);
         sem_n_instr(instr->u.si_.sinon);
+        code[ligneelse].arg2 = ligne;
     }
 
     balise_fermante(sortie_semantique, __FUNCTION__);
@@ -104,11 +113,16 @@ void sem_tantqueInst(n_instr *instr) {
 
     n_type *type_test = NULL;
 
+    int lignetest = ligne;
     type_test = sem_n_exp(instr->u.tantque_.test);
+    int lignetmp = ligne;
+    ajoute_ligne(jsifaux, ligne-1, 0, NULL);
     if (type_test == NULL || type_test->type != t_bool)
         erreur(__FUNCTION__, "err : \"while\" test must be a boolean");
 
     sem_n_instr(instr->u.tantque_.faire);
+    ajoute_ligne(jump, 0, lignetest, NULL);
+    code[lignetmp].arg2 = ligne;
 
     balise_fermante(sortie_semantique, __FUNCTION__);
 }
@@ -125,6 +139,7 @@ void sem_ecrireInst(n_instr *instr) {
     balise_ouvrante(sortie_semantique, __FUNCTION__);
 
     sem_n_exp(instr->u.ecrire_.expression);
+    ajoute_ligne(ecrire, ligne-1, 0, NULL);
 
     balise_fermante(sortie_semantique, __FUNCTION__);
 }
@@ -194,6 +209,8 @@ n_type *sem_varExp(n_exp *exp) {
 
     type_var = sem_n_var(exp->u.var);
 
+    ajoute_ligne(load, ligne, 0, exp->u.var->nom);
+
     balise_fermante(sortie_semantique, __FUNCTION__);
     return type_var;
 }
@@ -205,6 +222,8 @@ n_type *sem_intExp(n_exp *exp) {
     sprintf(entier, "%d", exp->u.entier);
     balise_text(sortie_semantique, "val", entier);
     free(entier);
+
+    ajoute_ligne(loadimm, exp->u.entier, 0, NULL);
 
     balise_fermante(sortie_semantique, __FUNCTION__);
     return cree_n_type_int();
@@ -219,7 +238,9 @@ n_type *sem_opExp(n_exp *exp) {
 
     type_op1 = sem_n_exp(exp->u.opExp_.op1);
     sem_operation(exp->u.opExp_.op);
+    int lignetmp = ligne-1;
     type_op2 = sem_n_exp(exp->u.opExp_.op2);
+    ajoute_ligne((c3a_op) exp->u.opExp_.op, lignetmp, ligne-1, NULL);
 
     assert_types_sont_compatibles(__FUNCTION__,
                                   type_op1, type_op2, &exp->u.opExp_.op);
@@ -238,12 +259,14 @@ n_type *sem_opExp(n_exp *exp) {
 
 n_type *sem_trueExp(n_exp *exp) {
     balise_ouvrante(sortie_semantique, __FUNCTION__);
+    ajoute_ligne(loadimm, 1, 0, NULL);
     balise_fermante(sortie_semantique, __FUNCTION__);
     return cree_n_type_bool();
 }
 
 n_type *sem_falseExp(n_exp *exp) {
     balise_ouvrante(sortie_semantique, __FUNCTION__);
+    ajoute_ligne(loadimm, 0, 0, NULL);
     balise_fermante(sortie_semantique, __FUNCTION__);
     return cree_n_type_bool();
 }
@@ -261,6 +284,7 @@ n_type *sem_appelExp(n_exp *exp) {
 
 n_type *sem_lireExp(n_exp *exp) {
     balise_ouvrante(sortie_semantique, __FUNCTION__);
+    ajoute_ligne(lire, 0, 0, NULL);
     balise_fermante(sortie_semantique, __FUNCTION__);
     return cree_n_type_int();
 }
@@ -403,6 +427,7 @@ void sem_n_fun_dec(n_fun_dec *fun_dec) {
     ajoute_fonction(fun_dec->nom, fun_dec->type, fun_dec->param);
 
     entree_fonction();
+    ajoute_ligne(entree, 0, 0, fun_dec->nom);
     ajoute_variable(fun_dec->nom, fun_dec->type);
 
     sem_n_l_dec(fun_dec->param);
@@ -411,6 +436,7 @@ void sem_n_fun_dec(n_fun_dec *fun_dec) {
     sem_n_instr(fun_dec->corps);
 
     sortie_fonction();
+    ajoute_ligne(sortie, 0, 0, fun_dec->nom);
 
     balise_fermante(sortie_semantique, __FUNCTION__);
 }
@@ -419,8 +445,16 @@ void sem_n_prog(n_prog *prog) {
     if (prog == NULL) return;
     balise_ouvrante(sortie_semantique, __FUNCTION__);
 
+    int lignetmp = ligne;
+    ajoute_ligne(jump, 0, 0, NULL);
     sem_n_l_dec(prog->variables);
     sem_n_l_fun_dec(prog->fonctions);
+    if (lignetmp == ligne-1) {
+        initialiser_code();
+    }
+    else {
+        code[lignetmp].arg2 = ligne;
+    }
     sem_n_instr(prog->corps);
 
     balise_fermante(sortie_semantique, __FUNCTION__);
@@ -445,13 +479,15 @@ n_type *sem_n_appel(n_appel *appel) {
     //sem_n_l_exp(appel->args);
 
     n_l_exp *args = appel->args;
-    n_l_dec *param = symboles.tab[indice].param;
-    while (args != NULL && param != NULL) {
+    n_l_dec *params = symboles.tab[indice].param;
+    while (args != NULL && params != NULL) {
         assert_types_sont_compatibles(__FUNCTION__, sem_n_exp(args->tete),
-                                                    param->tete->type, NULL);
+                                                    params->tete->type, NULL);
         args = args->queue;
-        param = param->queue;
+        params = params->queue;
+        ajoute_ligne(param, ligne-1, 0, NULL);
     }
+    ajoute_ligne(call, 0, 0, appel->fonction);
 
     balise_fermante(sortie_semantique, __FUNCTION__);
     return type_fonc;

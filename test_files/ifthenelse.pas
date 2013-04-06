@@ -4,11 +4,11 @@ var a, b : integer;
 
 begin
    a := read();
-   if a = 0 or true then
+   if a = 0 then
       write (2)
    else
    begin
-      b := a + 2;
+      b := -a + 7;
       write(b);
    end;
 end.

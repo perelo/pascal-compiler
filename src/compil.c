@@ -12,6 +12,7 @@
 #include "lexical.h"
 #include "syntaxique.h"     // MANGER_CC
 #include "parcours.h"
+#include "code3adr.h"
 
 int main(int argc, char **argv) {
     if (argc != 1 + 3) {
@@ -31,7 +32,9 @@ int main(int argc, char **argv) {
 
     MANGER_CC;
     n_prog *prog = ProgramPascal(); // semantique + arbre abstrait
+    initialiser_code();
     sem_n_prog (prog);  // table des symboles
+    affiche_code();
 
     return 0;
 }
