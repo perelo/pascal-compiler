@@ -65,7 +65,15 @@ void sem_affecteInst(n_instr *instr) {
 
     type_var = sem_n_var(instr->u.affecte_.var);
     type_exp = sem_n_exp(instr->u.affecte_.exp);
-    ajoute_ligne(store, ligne-1, 0, instr->u.affecte_.var->nom);
+
+    if (type_var->type == t_array) {
+        ajoute_ligne(stab, ligne-1, instr->u.affecte_.var->indice->u.entier,
+                                    instr->u.affecte_.var->nom);
+        type_var = type_var->arrayof;
+    }
+    else {
+        ajoute_ligne(store, ligne-1, 0, instr->u.affecte_.var->nom);
+    }
 
     assert_types_sont_compatibles(__FUNCTION__, type_var, type_exp, NULL);
 
@@ -197,7 +205,13 @@ n_type *sem_varExp(n_exp *exp) {
 
     type_var = sem_n_var(exp->u.var);
 
-    ajoute_ligne(load, ligne, 0, exp->u.var->nom);
+    if (type_var->type == t_array) {
+        ajoute_ligne(ltab, 0, exp->u.var->indice->u.entier, exp->u.var->nom);
+        type_var = type_var->arrayof;   // l'expression est du type du tableau
+    }
+    else {
+        ajoute_ligne(load, 0, 0, exp->u.var->nom);
+    }
 
     balise_fermante(sortie_semantique, __FUNCTION__);
     return type_var;
@@ -317,7 +331,7 @@ n_type *sem_n_var(n_var *var) {
             sprintf(real_msg, msg_init, var->nom);
             erreur(__FUNCTION__, real_msg);
         }
-        type_var = type_var->arrayof;
+        /*type_var = type_var->arrayof;*/
         balise_text(sortie_semantique, "var_indicee", var->nom);
         type_indice = sem_n_exp(var->indice);
         if (type_indice == NULL || type_indice->type != t_int) {
