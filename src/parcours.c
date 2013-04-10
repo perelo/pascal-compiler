@@ -32,9 +32,6 @@ void sem_n_instr(n_instr *instr) {
     balise_ouvrante(sortie_semantique, __FUNCTION__);
 
     switch (instr->type) {
-    case incrInst:  // TODO c'est quoi cette instruction ??
-        sem_incrInst(instr);
-        break;
     case affecteInst:
         sem_affecteInst(instr);
         break;
@@ -57,15 +54,6 @@ void sem_n_instr(n_instr *instr) {
         sem_blocInst(instr);
         break;
     }
-    balise_fermante(sortie_semantique, __FUNCTION__);
-}
-
-void sem_incrInst(n_instr *instr) {
-    balise_ouvrante(sortie_semantique, __FUNCTION__);
-
-    // TODO
-    sem_n_exp(instr->u.incr);
-
     balise_fermante(sortie_semantique, __FUNCTION__);
 }
 

@@ -78,14 +78,7 @@ n_exp *cree_n_exp_appel(n_appel *app) {
     n->u.appel = app;
     return n;
 }
-/*
-n_exp *cree_n_exp_incr(n_var *var) {
-    n_exp *n = malloc(sizeof(n_exp));
-    n->type = incrExp;
-    n->u.incr = var;
-    return n;
-}
-*/
+
 n_exp *cree_n_exp_var(n_var *var) {
     n_exp *n = malloc(sizeof(n_exp));
     n->type = varExp;
@@ -122,13 +115,6 @@ n_l_exp *cree_n_l_exp(n_exp *tete, n_l_exp *queue) {
     n_l_exp *n = malloc(sizeof(n_l_exp));
     n->tete = tete;
     n->queue = queue;
-    return n;
-}
-
-n_instr *cree_n_instr_incr(n_exp *incr) {
-    n_instr *n = malloc(sizeof(n_instr));
-    n->type = incrInst;
-    n->u.incr = incr;
     return n;
 }
 

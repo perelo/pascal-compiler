@@ -31,7 +31,6 @@ void sem_n_prog(n_prog *prog);
 n_type *sem_n_appel(n_appel *appel);
 
 /* instructions specifiques */
-void sem_incrInst(n_instr *instr);
 void sem_affecteInst(n_instr *instr);
 void sem_siInst(n_instr *instr);
 void sem_tantqueInst(n_instr *instr);
