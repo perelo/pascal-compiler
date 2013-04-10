@@ -37,40 +37,40 @@ void write_code(FILE *f) {
                           "param", "call", "entree", "sortie" };
     int l;
     for (l=0; l<ligne; l++) {
-        printf("%i:\t%s\t", l, op2string[code[l].op]);
+        fprintf(f, "%i:\t%s\t", l, op2string[code[l].op]);
         if (code[l].op < 15) {
-            printf("%i", code[l].arg1);
+            fprintf(f, "%i", code[l].arg1);
             if (code[l].op < 13)
-                printf(", %i", code[l].arg2);
+                fprintf(f, ", %i", code[l].arg2);
         }
         else switch(code[l].op) {
           case store:
-            printf("%i, ", code[l].arg1);
+            fprintf(f, "%i, ", code[l].arg1);
           case load:
           case call:
           case entree:
           case sortie:
-            printf("%s", code[l].var);
+            fprintf(f, "%s", code[l].var);
             break;
           case stab:
-            printf("%i, ", code[l].arg1);
+            fprintf(f, "%i, ", code[l].arg1);
           case ltab:
-            printf("%s[%i]", code[l].var, code[l].arg2);
+            fprintf(f, "%s[%i]", code[l].var, code[l].arg2);
             break;
           case loadimm:
           case ecrire:
           case param:
-            printf("%i", code[l].arg1);
+            fprintf(f, "%i", code[l].arg1);
             break;
           case addimm:
-            printf("%i, %i", code[l].arg1, code[l].arg2);
+            fprintf(f, "%i, %i", code[l].arg1, code[l].arg2);
             break;
           case jsifaux:
-            printf("%i, ", code[l].arg1);
+            fprintf(f, "%i, ", code[l].arg1);
           case jump:
-            printf("%i", code[l].arg2);
+            fprintf(f, "%i", code[l].arg2);
           default: break;
         }
-        putchar('\n');
+        fputc('\n', f);
     }
 }
