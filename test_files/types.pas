@@ -6,13 +6,13 @@ var
 begin
    i := 3 * 4;
    b := true;
-   tab[1] := 5;
+   tab[1] := 2;
    while b do
    begin
       if i < j then
          b := false
       else
-         i := i + 2;
+         i := i + tab[1];
    end;
    write(i);
 end.
