@@ -1,6 +1,8 @@
 #ifndef __CODE3ADR__
 #define __CODE3ADR__
 
+#include <stdio.h>      // FILE
+
 #include "syntabs.h"
 
 /* Liste des opérations en code à 3 adresses. Toutes les opérations
@@ -29,6 +31,6 @@ int ligne;
 void initialiser_code();
 void parcours_prog(n_prog *n);
 void ajoute_ligne(c3a_op op, int arg1, int arg2, char *var);
-void affiche_code();
+void write_code(FILE *f);
 
 #endif

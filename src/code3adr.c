@@ -25,7 +25,7 @@ void ajoute_ligne(c3a_op op, int arg1, int arg2, char *var) {
     code[ligne++].var = var;
 }
 
-void affiche_code() {
+void write_code(FILE *f) {
     /* Affiche le code, s'il respecte la table du TP. L'ordre dans le
        tableau op2string doit correspondre à celui des opérations
        dans code3adr.h. */
