@@ -6,7 +6,8 @@ var
 begin
    i := 3 * 4;
    b := true;
-   tab[1] := 2;
+   tab[42 + i] := 2;
+   tab[1] := 3;
    while b do
    begin
       if i < j then

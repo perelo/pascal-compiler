@@ -16,6 +16,8 @@
 #include "dico.h"
 #include "code3adr.h"
 
+int ligne_indice_expr;
+
 void sem_n_l_instr(n_l_instr *l_instr) {
     if (l_instr == NULL) return;
     balise_ouvrante(sortie_semantique, __FUNCTION__);
@@ -67,7 +69,7 @@ void sem_affecteInst(n_instr *instr) {
     type_exp = sem_n_exp(instr->u.affecte_.exp);
 
     if (type_var->type == t_array) {
-        ajoute_ligne(stab, ligne-1, instr->u.affecte_.var->indice->u.entier,
+        ajoute_ligne(stab, ligne-1, ligne_indice_expr,
                                     instr->u.affecte_.var->nom);
         type_var = type_var->arrayof;
     }
@@ -206,7 +208,7 @@ n_type *sem_varExp(n_exp *exp) {
     type_var = sem_n_var(exp->u.var);
 
     if (type_var->type == t_array) {
-        ajoute_ligne(ltab, 0, exp->u.var->indice->u.entier, exp->u.var->nom);
+        ajoute_ligne(ltab, 0, ligne_indice_expr, exp->u.var->nom);
         type_var = type_var->arrayof;   // l'expression est du type du tableau
     }
     else {
@@ -334,6 +336,7 @@ n_type *sem_n_var(n_var *var) {
         /*type_var = type_var->arrayof;*/
         balise_text(sortie_semantique, "var_indicee", var->nom);
         type_indice = sem_n_exp(var->indice);
+        ligne_indice_expr = ligne-1;
         if (type_indice == NULL || type_indice->type != t_int) {
             erreur(__FUNCTION__, "err : index of array must be an int");
         }
