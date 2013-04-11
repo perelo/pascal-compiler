@@ -21,6 +21,8 @@ struct triplet {
   int arg1;
   int arg2;
   char *var;
+  int adresse;
+  int mode;
 } *code;
 
 /* taille totale du tableau (utile pour réallocation) */
