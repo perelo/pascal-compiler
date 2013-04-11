@@ -17,6 +17,7 @@
 #include "code3adr.h"
 
 int ligne_indice_expr;
+int dico_indice_var;
 
 void sem_n_l_instr(n_l_instr *l_instr) {
     if (l_instr == NULL) return;
@@ -65,8 +66,8 @@ void sem_affecteInst(n_instr *instr) {
     n_type *type_var = NULL;
     n_type *type_exp = NULL;
 
-    type_var = sem_n_var(instr->u.affecte_.var);
     type_exp = sem_n_exp(instr->u.affecte_.exp);
+    type_var = sem_n_var(instr->u.affecte_.var);
 
     if (type_var->type == t_array) {
         ajoute_ligne(stab, ligne-1, ligne_indice_expr,
@@ -76,6 +77,8 @@ void sem_affecteInst(n_instr *instr) {
     else {
         ajoute_ligne(store, ligne-1, 0, instr->u.affecte_.var->nom);
     }
+    code[ligne-1].adresse = symboles.tab[dico_indice_var].adresse;
+    code[ligne-1].mode = symboles.tab[dico_indice_var].mode;
 
     assert_types_sont_compatibles(__FUNCTION__, type_var, type_exp, NULL);
 
@@ -214,6 +217,8 @@ n_type *sem_varExp(n_exp *exp) {
     else {
         ajoute_ligne(load, 0, 0, exp->u.var->nom);
     }
+    code[ligne-1].adresse = symboles.tab[dico_indice_var].adresse;
+    code[ligne-1].mode = symboles.tab[dico_indice_var].mode;
 
     balise_fermante(sortie_semantique, __FUNCTION__);
     return type_var;
@@ -316,15 +321,15 @@ n_type *sem_n_var(n_var *var) {
     n_type *type_var;
     n_type *type_indice;
 
-    int indice = recherche_symbole(var->nom);
-    if (indice == -1) {
+    dico_indice_var = recherche_symbole(var->nom);
+    if (dico_indice_var == -1) {
         char *msg_init = "err : undeclared variable %s";
         char *real_msg = malloc(strlen(msg_init) + strlen(var->nom));
         sprintf(real_msg, msg_init, var->nom);
         erreur(__FUNCTION__, real_msg);
     }
 
-    type_var = symboles.tab[indice].type;
+    type_var = symboles.tab[dico_indice_var].type;
 
     if (var->type == indicee) {
         if (type_var->type != t_array) {
@@ -471,20 +476,20 @@ n_type *sem_n_appel(n_appel *appel) {
 
     n_type *type_fonc = NULL;
 
-    int indice = recherche_symbole(appel->fonction);
-    if (indice == -1) {
+    dico_indice_var = recherche_symbole(appel->fonction);
+    if (dico_indice_var == -1) {
         char *msg_init = "err : undeclared function %s";
         char *real_msg = malloc(strlen(msg_init) + strlen(appel->fonction));
         sprintf(real_msg, msg_init, appel->fonction);
         erreur(__FUNCTION__, real_msg);
     }
 
-    type_fonc = symboles.tab[indice].type;
+    type_fonc = symboles.tab[dico_indice_var].type;
     balise_text(sortie_semantique, "fonction", appel->fonction);
     //sem_n_l_exp(appel->args);
 
     n_l_exp *args = appel->args;
-    n_l_dec *params = symboles.tab[indice].param;
+    n_l_dec *params = symboles.tab[dico_indice_var].param;
     while (args != NULL && params != NULL) {
         assert_types_sont_compatibles(__FUNCTION__, sem_n_exp(args->tete),
                                                     params->tete->type, NULL);

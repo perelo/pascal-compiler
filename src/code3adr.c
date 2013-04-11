@@ -22,7 +22,9 @@ void ajoute_ligne(c3a_op op, int arg1, int arg2, char *var) {
     code[ligne].op = op;
     code[ligne].arg1 = arg1;
     code[ligne].arg2 = arg2;
-    code[ligne++].var = var;
+    code[ligne].var = var;
+    code[ligne].adresse = -1;
+    code[ligne++].mode = -1;
 }
 
 void write_code(FILE *f) {

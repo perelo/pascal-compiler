@@ -5,6 +5,7 @@
  *
  */
 #include <stdlib.h>
+#include <string.h>         // memset()
 
 #include "registres.h"
 #include "code3adr.h"
