@@ -9,8 +9,8 @@
 CC = gcc
 CFLAGS = -Wall -O3
 
-H_FILES = code3adr.h dico.h lexemes.h lexical.h parcours.h premiers.h registres.h syntabs.h syntaxique.h
-C_FILES = code3adr.c compil.c dico.c lexical.c parcours.c registres.c syntabs.c syntaxique.c
+H_FILES = code3adr.h dico.h lexemes.h lexical.h mips.h parcours.h premiers.h registres.h syntabs.h syntaxique.h
+C_FILES = code3adr.c compil.c dico.c lexical.c mips.c parcours.c registres.c syntabs.c syntaxique.c
 
 OUTPUT_DIR = 
 

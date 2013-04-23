@@ -14,6 +14,7 @@
 #include "syntaxique.h"     // MANGER_CC
 #include "parcours.h"
 #include "code3adr.h"
+#include "mips.h"
 
 int main(int argc, char **argv) {
     if (argc != 2 + 1) {
@@ -51,6 +52,7 @@ int main(int argc, char **argv) {
     initialiser_code();
     sem_n_prog (prog);  // table des symboles
     write_code(sortie_c3a);
+    genere_mips();
 
     fclose(yyin);
     fclose(sortie_syntaxique);
