@@ -25,9 +25,15 @@ void genere_mips() {
         symboles.tab[symboles.base].mode != FONCTION) {
         printf("\t.data\n");
         printf("var:");
-        for (i = symboles.base; i < symboles.sommet; ++i)
-            if (symboles.tab[i].mode != FONCTION)
-                printf("\t.word\t0\t# %s\n", symboles.tab[i].nom);
+        for (i = symboles.base; i < symboles.sommet; ++i) {
+            variable v = symboles.tab[i];
+            if (v.mode == FONCTION) break;
+            printf("\t.word\t");
+            int j = (v.type->type == t_array) ? v.type->fin - v.type->debut
+                                              : 1;
+            while (j--) printf(" 0");
+            printf("\t# %s\n", v.nom);
+        }
         printf("\n");
     }
 
