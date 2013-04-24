@@ -65,7 +65,7 @@ int trouve_registre_associe(int ligne) {
     int i;
     for (i = 0; i < NB_REGISTRES; ++i) {
         if (reg[i] == ligne)
-            return ligne;
+            return i;
     }
     return -1;
 }
