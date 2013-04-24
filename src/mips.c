@@ -217,10 +217,69 @@ void genere_mips() {
             }
             break;
           case ltab:
-            // TODO
+            {
+            variable v = symboles.tab[recherche_symbole(code[l].var)];
+            int reg_adr_var, reg_offset, reg_sizeof_int;
+            printf("addi\t$t%i, $t%i, %i\n",
+                    reg_offset=cherche_registre_libre(dernier, l),
+                    trouve_registre_associe(code[l].arg2),
+                    v.adresse - v.type->debut);
+            reg[reg_offset] = l;
+            printf("\tli\t$t%i, %i\n",
+                    reg_sizeof_int=cherche_registre_libre(dernier, l),
+                    sizeof(int));
+            reg[reg_sizeof_int] = l;
+            printf("\tmult\t$t%i, $t%i\n",
+                    reg_offset,
+                    reg_sizeof_int);
+            printf("\tmflo\t$t%i\n", reg_offset);
+            printf("\tla\t$t%i, var\n",
+                    reg_adr_var=cherche_registre_libre(dernier, l));
+            reg[reg_adr_var] = l;
+            printf("\tadd\t$t%i, $t%i, $t%i\n",
+                    reg_adr_var,
+                    reg_adr_var,
+                    reg_offset);
+            printf("\tlw\t$t%i, 0($t%i)\n",
+                    r=cherche_registre_libre(dernier, l),
+                    reg_adr_var);
+            reg[reg_sizeof_int] = -1;
+            reg[reg_offset] = -1;
+            reg[reg_adr_var] = -1;
+            reg[r] = l;
+            }
             break;
           case stab:
-            // TODO
+            {
+            variable v = symboles.tab[recherche_symbole(code[l].var)];
+            int reg_adr_var, reg_offset, reg_sizeof_int;
+            printf("addi\t$t%i, $t%i, %i\n",
+                    reg_offset=cherche_registre_libre(dernier, l),
+                    trouve_registre_associe(code[l].arg2),
+                    v.adresse - v.type->debut);
+            reg[reg_offset] = l;
+            printf("\tli\t$t%i, %i\n",
+                    reg_sizeof_int=cherche_registre_libre(dernier, l),
+                    sizeof(int));
+            reg[reg_sizeof_int] = l;
+            printf("\tmult\t$t%i, $t%i\n",
+                    reg_offset,
+                    reg_sizeof_int);
+            printf("\tmflo\t$t%i\n", reg_offset);
+            printf("\tla\t$t%i, var\n",
+                    reg_adr_var=cherche_registre_libre(dernier, l));
+            reg[reg_adr_var] = l;
+            printf("\tadd\t$t%i, $t%i, $t%i\n",
+                    reg_adr_var,
+                    reg_adr_var,
+                    reg_offset);
+            printf("\tsw\t$t%i, 0($t%i)\n",
+                    trouve_registre_associe(code[l].arg1),
+                    reg_adr_var);
+            reg[reg_sizeof_int] = -1;
+            reg[reg_offset] = -1;
+            reg[reg_adr_var] = -1;
+            }
             break;
           case loadimm:
             printf("li\t$t%i, %i\n",
