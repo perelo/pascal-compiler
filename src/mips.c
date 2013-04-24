@@ -76,24 +76,98 @@ void genere_mips() {
             reg[r] = l;
             break;
           case c3a_egal:
+            printf("li\t$t%i, 1\n",
+                    r=cherche_registre_libre(dernier, l));
+            printf("\tbeq\t$t%i, $t%i, j%i\n",
+                    trouve_registre_associe(code[l].arg1),
+                    trouve_registre_associe(code[l].arg2),
+                    l+1);
+            printf("\tli\t$t%i, 0\n", r);
+            reg[r] = l;
             break;
           case c3a_diff:
+            printf("li\t$t%i, 0\n",
+                    r=cherche_registre_libre(dernier, l));
+            printf("\tbeq\t$t%i, $t%i, j%i\n",
+                    trouve_registre_associe(code[l].arg1),
+                    trouve_registre_associe(code[l].arg2),
+                    l+1);
+            printf("\tli\t$t%i, 1\n", r);
+            reg[r] = l;
             break;
           case c3a_inf:
+            printf("li\t$t%i, 1\n",
+                    r=cherche_registre_libre(dernier, l));
+            printf("\tblt\t$t%i, $t%i, j%i\n",
+                    trouve_registre_associe(code[l].arg1),
+                    trouve_registre_associe(code[l].arg2),
+                    l+1);
+            printf("\tli\t$t%i, 0\n", r);
+            reg[r] = l;
             break;
           case c3a_sup:
             break;
+            printf("li\t$t%i, 1\n",
+                    r=cherche_registre_libre(dernier, l));
+            printf("\tbgt\t$t%i, $t%i, j%i\n",
+                    trouve_registre_associe(code[l].arg1),
+                    trouve_registre_associe(code[l].arg2),
+                    l+1);
+            printf("\tli\t$t%i, 0\n", r);
+            reg[r] = l;
           case c3a_infeg:
             break;
+            printf("li\t$t%i, 1\n",
+                    r=cherche_registre_libre(dernier, l));
+            printf("\tble\t$t%i, $t%i, j%i\n",
+                    trouve_registre_associe(code[l].arg1),
+                    trouve_registre_associe(code[l].arg2),
+                    l+1);
+            printf("\tli\t$t%i, 0\n", r);
+            reg[r] = l;
           case c3a_supeg:
             break;
+            printf("li\t$t%i, 1\n",
+                    r=cherche_registre_libre(dernier, l));
+            printf("\tbge\t$t%i, $t%i, j%i\n",
+                    trouve_registre_associe(code[l].arg1),
+                    trouve_registre_associe(code[l].arg2),
+                    l+1);
+            printf("\tli\t$t%i, 0\n", r);
+            reg[r] = l;
           case c3a_ou:
+            printf("or\t$t%i, $t%i, $t%i\n",
+                r=cherche_registre_libre(dernier, l),
+                trouve_registre_associe(code[l].arg1),
+                trouve_registre_associe(code[l].arg2));
+            reg[r] = l;
             break;
           case c3a_et:
+            printf("and\t$t%i, $t%i, $t%i\n",
+                r=cherche_registre_libre(dernier, l),
+                trouve_registre_associe(code[l].arg1),
+                trouve_registre_associe(code[l].arg2));
+            reg[r] = l;
             break;
-          case c3a_non:
+          case c3a_non: // XOR with 1
+            {
+            int reg_one;
+            printf("li\t$t%i, 1\n",
+                    reg_one=cherche_registre_libre(dernier, l));
+            reg[reg_one] = l;
+            printf("\txor\t$t%i, $t%i, $t%i\n",
+                    r=cherche_registre_libre(dernier, l),
+                    trouve_registre_associe(code[l].arg1),
+                    reg_one);
+            reg[reg_one] = -1;
+            reg[r] = l;
+            }
             break;
           case c3a_negatif:
+            printf("sub\t$t%i, $zero, $t%i\n",
+                    r=cherche_registre_libre(dernier, l),
+                    trouve_registre_associe(code[l].arg1));
+            reg[r] = l;
             break;
           case lire:
             printf("li\t$v0, 5\n");
@@ -137,8 +211,10 @@ void genere_mips() {
             }
             break;
           case ltab:
+            // TODO
             break;
           case stab:
+            // TODO
             break;
           case loadimm:
             printf("li\t$t%i, %i\n",
@@ -154,18 +230,24 @@ void genere_mips() {
             reg[r] = l;
             break;
           case jump:
-            printf("j\t$t%i\n",
-                trouve_registre_associe(code[l].arg1));
+            printf("j\tj%i\n", code[l].arg2);
             break;
           case jsifaux:
+            printf("beq\t$t%i, $zero, j%i\n",
+                    trouve_registre_associe(code[l].arg1),
+                    code[l].arg2);
             break;
           case param:
+            // TODO
             break;
           case call:
+            // TODO
             break;
           case entree:
+            // TODO
             break;
           case sortie:
+            // TODO
             break;
         }
     }
