@@ -196,7 +196,7 @@ void genere_mips() {
             reg[reg_adr_var] = l;
             printf("\tlw\t$t%i, %i($t%i)\n",
                     r=cherche_registre_libre(dernier, l),
-                    sizeof(int) * recherche_symbole(code[l].var),
+                    sizeof(int) * symboles.tab[recherche_symbole(code[l].var)].adresse,
                     reg_adr_var);
             reg[reg_adr_var] = -1;
             reg[r] = l;
@@ -210,7 +210,7 @@ void genere_mips() {
             reg[reg_adr_var] = l;
             printf("\tsw\t$t%i, %i($t%i)\n",
                     r=trouve_registre_associe(code[l].arg1),
-                    sizeof(int) * recherche_symbole(code[l].var),
+                    sizeof(int) * symboles.tab[recherche_symbole(code[l].var)].adresse,
                     reg_adr_var);
             reg[reg_adr_var] = -1;
             reg[r] = l;
