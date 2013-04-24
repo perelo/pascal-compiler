@@ -376,7 +376,11 @@ void sem_n_dec(n_dec *dec) {
     balise_text(sortie_semantique, "nom", dec->nom);
     sem_n_type(dec->type);
 
-    ajoute_variable(dec->nom, dec->type);
+    if (dec->type->type == t_array) {
+        ajoute_tableau(dec->nom, dec->type, dec->type->debut, dec->type->fin);
+    } else {
+        ajoute_variable(dec->nom, dec->type);
+    }
 
     balise_fermante(sortie_semantique, __FUNCTION__);
 }
