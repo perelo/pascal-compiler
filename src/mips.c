@@ -96,8 +96,17 @@ void genere_mips() {
           case c3a_negatif:
             break;
           case lire:
+            printf("li\t$v0, 5\n");
+            printf("\tsyscall\t\t# read int\n");
+            printf("\tmove\t$t%i, $v0\n",
+                    r=cherche_registre_libre(dernier, l));
+            reg[r] = l;
             break;
           case ecrire:
+            printf("li\t$v0, 1\n");
+            printf("\tmove\t$a0, $t%i\n",
+                trouve_registre_associe(code[l].arg1));
+            printf("\tsyscall\t\t# write int\n");
             break;
           case load:
             {
@@ -161,5 +170,5 @@ void genere_mips() {
         }
     }
     printf("j%i:\tli $v0, 10\n", l);
-    printf("\tsyscall       # exit\n");
+    printf("\tsyscall\t\t# exit\n");
 }
