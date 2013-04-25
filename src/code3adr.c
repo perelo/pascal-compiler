@@ -46,12 +46,12 @@ void write_code(FILE *f) {
                 fprintf(f, ", %i", code[l].arg2);
         }
         else switch(code[l].op) {
+          case entree:
+          case sortie:
           case store:
             fprintf(f, "%i, ", code[l].arg1);
           case load:
           case call:
-          case entree:
-          case sortie:
             fprintf(f, "%s", code[l].var);
             break;
           case stab:

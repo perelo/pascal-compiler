@@ -439,8 +439,16 @@ void sem_n_fun_dec(n_fun_dec *fun_dec) {
 
     ajoute_fonction(fun_dec->nom, fun_dec->type, fun_dec->param);
 
+    /* nombre a empiler quand on entre dans une fonction,
+     * et a depiler quand on sort */
+    int nb_pile = 0;
+    n_l_dec *l_dec;
+    for (l_dec = fun_dec->variables; l_dec != NULL; l_dec = l_dec->queue) {
+        ++nb_pile;
+    }
+
     entree_fonction();
-    ajoute_ligne(entree, 0, 0, fun_dec->nom);
+    ajoute_ligne(entree, nb_pile, 0, fun_dec->nom);
     ajoute_variable(fun_dec->nom, fun_dec->type);
 
     sem_n_l_dec(fun_dec->param);
@@ -448,8 +456,12 @@ void sem_n_fun_dec(n_fun_dec *fun_dec) {
     sem_n_l_dec(fun_dec->variables);
     sem_n_instr(fun_dec->corps);
 
+    for (l_dec = fun_dec->param; l_dec != NULL; l_dec = l_dec->queue) {
+        ++nb_pile;
+    }
+
     sortie_fonction();
-    ajoute_ligne(sortie, 0, 0, fun_dec->nom);
+    ajoute_ligne(sortie, nb_pile, 0, fun_dec->nom);
 
     balise_fermante(sortie_semantique, __FUNCTION__);
 }
