@@ -9,4 +9,27 @@
 
 void genere_mips();
 
+/* pile apres etre entree dans une fonction
+
+  -----------
+  |$t32     |
+  | ...     |
+  |$t0      |
+  -----------
+  |valeur   |
+  |de retour|
+  -----------
+  |param n  |
+  | ...     |
+  |param 1  |
+  -----------
+  |variables|
+  |locales  |
+  -----------
+  |adresse  |
+  |de retour|
+  -----------
+
+*/
+
 #endif /* __MIPS_H__ */
