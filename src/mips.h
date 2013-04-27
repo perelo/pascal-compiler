@@ -12,21 +12,22 @@ void genere_mips();
 /* pile apres etre entree dans une fonction
 
   -----------
+  |$fp      |
   |$t32     |
   | ...     |
   |$t0      |
   -----------
-  |valeur   |
+  |valeur   |   <- $fp
   |de retour|
   -----------
-  |param n  |
-  | ...     |
   |param 1  |
+  | ...     |
+  |param n  |   <- $sp avant jump
   -----------
   |variables|
   |locales  |
   -----------
-  |adresse  |
+  |adresse  |   <- $sp dans la fonction
   |de retour|
   -----------
 

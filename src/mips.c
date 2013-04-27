@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>         // strcmp()
 
 #include "mips.h"
 #include "registres.h"
@@ -15,7 +16,7 @@
 
 variable* fonction = NULL;
 int params [MAX_PARAM];
-int index_param = 0;
+int nb_param = 0;
 
 void genere_mips() {
     int i, l, r;
@@ -47,7 +48,8 @@ void genere_mips() {
     printf("\t.globl main\n");
     printf("main:\tnop\n");
     for (l = 0; l < ligne; ++l) {
-        printf("j%i:\t", l);
+        if (code[l].op != param)
+            printf("j%i:\t", l);
         switch(code[l].op) {
           case c3a_plus:
             printf("add\t$t%i, $t%i, $t%i\n",
@@ -75,7 +77,7 @@ void genere_mips() {
             printf("div\t$t%i, $t%i\n",
                     trouve_registre_associe(code[l].arg1),
                     trouve_registre_associe(code[l].arg2));
-            printf("\tmflo\t$t%i",
+            printf("\tmflo\t$t%i\n",
                     r=cherche_registre_libre(dernier, l));
             reg[r] = l;
             break;
@@ -83,7 +85,7 @@ void genere_mips() {
             printf("div\t$t%i, $t%i\n",
                     trouve_registre_associe(code[l].arg1),
                     trouve_registre_associe(code[l].arg2));
-            printf("\tmfhi\t$t%i",
+            printf("\tmfhi\t$t%i\n",
                     r=cherche_registre_libre(dernier, l));
             reg[r] = l;
             break;
@@ -118,7 +120,6 @@ void genere_mips() {
             reg[r] = l;
             break;
           case c3a_sup:
-            break;
             printf("li\t$t%i, 1\n",
                     r=cherche_registre_libre(dernier, l));
             printf("\tbgt\t$t%i, $t%i, j%i\n",
@@ -127,8 +128,8 @@ void genere_mips() {
                     l+1);
             printf("\tli\t$t%i, 0\n", r);
             reg[r] = l;
-          case c3a_infeg:
             break;
+          case c3a_infeg:
             printf("li\t$t%i, 1\n",
                     r=cherche_registre_libre(dernier, l));
             printf("\tble\t$t%i, $t%i, j%i\n",
@@ -137,8 +138,8 @@ void genere_mips() {
                     l+1);
             printf("\tli\t$t%i, 0\n", r);
             reg[r] = l;
-          case c3a_supeg:
             break;
+          case c3a_supeg:
             printf("li\t$t%i, 1\n",
                     r=cherche_registre_libre(dernier, l));
             printf("\tbge\t$t%i, $t%i, j%i\n",
@@ -147,6 +148,7 @@ void genere_mips() {
                     l+1);
             printf("\tli\t$t%i, 0\n", r);
             reg[r] = l;
+            break;
           case c3a_ou:
             printf("or\t$t%i, $t%i, $t%i\n",
                 r=cherche_registre_libre(dernier, l),
@@ -195,34 +197,45 @@ void genere_mips() {
             printf("\tsyscall\t\t# write int\n");
             break;
           case load:
-            {
-            // TODO si c'est local
-            int reg_adr_var;
-            printf("la\t$t%i, var\n",
-                    reg_adr_var=cherche_registre_libre(dernier, l));
-            reg[reg_adr_var] = l;
-            printf("\tlw\t$t%i, %i($t%i)\n",
-                    r=cherche_registre_libre(dernier, l),
-                    wordsize * symboles.tab[recherche_symbole(code[l].var)].adresse,
-                    reg_adr_var);
-            reg[reg_adr_var] = -1;
-            reg[r] = l;
+            if (code[l].mode == LOCAL) {
+                printf("lw\t$t%i, -%i($fp)\n",
+                        r=cherche_registre_libre(dernier, l),
+                        code[l].adresse * wordsize);
+            } else { // GLOBAL
+                int reg_adr_var;
+                printf("la\t$t%i, var\n",
+                        reg_adr_var=cherche_registre_libre(dernier, l));
+                reg[reg_adr_var] = l;
+                printf("\tlw\t$t%i, %i($t%i)\n",
+                        r=cherche_registre_libre(dernier, l),
+                        wordsize * code[l].adresse,
+                        reg_adr_var);
+                reg[reg_adr_var] = -1;
             }
+            reg[r] = l;
             break;
           case store:
-            {
-            // TODO si c'est local
-            int reg_adr_var;
-            printf("la\t$t%i, var\n",
-                    reg_adr_var=cherche_registre_libre(dernier, l));
-            reg[reg_adr_var] = l;
-            printf("\tsw\t$t%i, %i($t%i)\n",
-                    r=trouve_registre_associe(code[l].arg1),
-                    wordsize * symboles.tab[recherche_symbole(code[l].var)].adresse,
-                    reg_adr_var);
-            reg[reg_adr_var] = -1;
-            reg[r] = l;
+            if (code[l].mode == LOCAL) {
+                if (strcmp(code[l].var, fonction->nom) == 0) {
+                    printf("sw\t$t%i, 0($fp)\n",
+                            r=trouve_registre_associe(code[l].arg1));
+                } else {
+                    printf("sw\t$t%i, -%i($fp)\n",
+                            r=trouve_registre_associe(code[l].arg1),
+                            code[l].adresse * wordsize);
+                }
+            } else { // GLOBAL
+                int reg_adr_var;
+                printf("la\t$t%i, var\n",
+                        reg_adr_var=cherche_registre_libre(dernier, l));
+                reg[reg_adr_var] = l;
+                printf("\tsw\t$t%i, %i($t%i)\n",
+                        r=trouve_registre_associe(code[l].arg1),
+                        wordsize * code[l].adresse,
+                        reg_adr_var);
+                reg[reg_adr_var] = -1;
             }
+            reg[r] = l;
             break;
           case ltab:
             {
@@ -311,40 +324,49 @@ void genere_mips() {
                     code[l].arg2);
             break;
           case param:
-            // TODO in sem, check max param
-            params[index_param++] = trouve_registre_associe(code[l].arg1);
+            params[nb_param++] = trouve_registre_associe(code[l].arg1);
             break;
           case call:
             {
-            /* empiler tous les registres temporaires */
-            printf("addi\t$sp, $sp, -%i\n", NB_REGISTRES * wordsize);
+            /* empiler tous les registres temporaires et $fp */
+            printf("addi\t$sp, $sp, -%i\n", (NB_REGISTRES + 1) * wordsize);
             for (i = 0; i < NB_REGISTRES; ++i) {
                 printf("\tsw\t$t%i, %i($sp)\n", i, i * wordsize);
             }
+            printf("\tsw\t$fp, %i($sp)\n", i * wordsize);
             /* reserver l'espace pour la valeur de retour et les parametres */
-            printf("\taddi\t$sp, $sp, -%i\n", (1+index_param) * wordsize);
+            printf("\taddi\t$sp, $sp, -%i\n", (1+nb_param) * wordsize);
+            /* pointer $fp vers l'adr de la valeur de retour */
+            printf("\tadd\t$fp, $sp, %i\n", nb_param * wordsize);
             /* empiler les parametres */
-            if (index_param != 0) {
-                while (index_param--) {
-                    printf("\tsw\t$t%i, %i($sp)\n",
-                            params[index_param],
-                            index_param * wordsize);
+            if (nb_param != 0) {
+                /* du haut vert le bas a partir de $fp */
+                for (i = 0; i < nb_param; ++i) {
+                //while (nb_param--) {
+                    printf("\tsw\t$t%i, -%i($fp)\n",
+                            params[i],
+                            (i + 1) * wordsize);
                 }
             }
 
+            /* consommer les parametres, preparation au prochain call */
+            nb_param = 0;
             /* jump, bunny rabbit !!! */
             printf("\tjal\tj%i\n",
                         symboles.tab[recherche_symbole(code[l].var)].adresse);
 
-            /* depiler la valeur de retour */
+            /* restaurer les registres sauvegardes et $fp */
+            for (i = 0; i < NB_REGISTRES; ++i) {
+                                                    // +1 because return value
+                                                    // is still under regs
+                printf("\tlw\t$t%i, %i($sp)\n", i, (i+1) * wordsize);
+            }
+            printf("\tlw\t$fp, %i($sp)\n", (i+1) * wordsize);
+            /* recuperer la valeur de retour */
             printf("\tlw\t$t%i, 0($sp)\n",
                     r=cherche_registre_libre(dernier, l));
-            printf("\taddi\t$sp, $sp, %i\n", wordsize);
-            /* depiler les registres sauvegardes */
-            for (i = 0; i < NB_REGISTRES; ++i) {
-                printf("\tlw\t$t%i, %i($sp)\n", i, i * wordsize);
-            }
-            printf("addi\t$sp, $sp, %i\n", NB_REGISTRES * wordsize);
+            /* liberer la pile de la valeur de retour + des registres + $fp */
+            printf("\taddi\t$sp, $sp, %i\n", (NB_REGISTRES + 2) * wordsize);
 
             reg[r] = l;
             }
@@ -359,9 +381,9 @@ void genere_mips() {
             break;
           case sortie:
             /* recuperer $ra */
-            printf("\tlw\t$ra, 0($sp)\n");
+            printf("lw\t$ra, 0($sp)\n");
             /* liberer les variables locales les arguments et $ra */
-            printf("addi\t$sp, $sp, %i\n", (1 + code[l].arg1) * wordsize);
+            printf("\taddi\t$sp, $sp, %i\n", (1 + code[l].arg1) * wordsize);
             /* sauter a l'appelant */
             printf("\tjr\t$ra\n");
             fonction = NULL;
