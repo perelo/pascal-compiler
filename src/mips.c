@@ -11,8 +11,7 @@
 #include "registres.h"
 #include "dico.h"
 #include "code3adr.h"       // ligne
-
-#define MAX_PARAM 16
+#include "parcours.h"       // MAX_PARAM
 
 variable* fonction = NULL;
 int params [MAX_PARAM];

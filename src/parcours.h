@@ -14,6 +14,8 @@
 
 #include "syntabs.h"
 
+#define MAX_PARAM 16
+
 FILE *sortie_semantique;
 
 void sem_n_l_instr(n_l_instr *l_instr);

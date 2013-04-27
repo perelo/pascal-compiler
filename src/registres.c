@@ -10,9 +10,11 @@
 #include "registres.h"
 #include "code3adr.h"
 #include "syntaxique.h"     // erreur()
+#include "parcours.h"       // MAX_PARAM
 
 int *creer_derniers_appels() {
-    int l;
+    int l, nb_param = 0;
+    int params_for_next_call[MAX_PARAM];
     int *tab = malloc(ligne * sizeof(int));
     for (l = 0; l < ligne; ++l) {
         tab[l] = l;
@@ -38,9 +40,16 @@ int *creer_derniers_appels() {
                  code[l].op == store       ||
                  code[l].op == stab        ||
                  code[l].op == addimm      ||
-                 code[l].op == jsifaux     ||
-                 code[l].op == param) {
+                 code[l].op == jsifaux) {
             tab[code[l].arg1] = l;
+        } else if (code[l].op == param) {
+            params_for_next_call[nb_param++] = code[l].arg1;
+        } else if (code[l].op == call) {
+            int i;
+            for (i = 0; i < nb_param; ++i) {
+                tab[params_for_next_call[i]] = l;
+            }
+            nb_param = 0;
         }
     }
     return tab;
