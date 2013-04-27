@@ -430,6 +430,7 @@ void sem_n_l_fun_dec(n_l_fun_dec *l_fun_dec) {
     balise_ouvrante(sortie_semantique, __FUNCTION__);
 
     sem_n_l_fun_dec(l_fun_dec->queue);
+    adresse_locale_courante = 0;
     sem_n_fun_dec(l_fun_dec->tete);
 
     balise_fermante(sortie_semantique, __FUNCTION__);
@@ -493,7 +494,7 @@ n_type *sem_n_appel(n_appel *appel) {
 
     n_type *type_fonc = NULL;
 
-    dico_indice_var = recherche_symbole(appel->fonction);
+    dico_indice_var = cherche_globale(appel->fonction);
     if (dico_indice_var == -1) {
         char *msg_init = "err : undeclared function %s";
         char *real_msg = malloc(strlen(msg_init) + strlen(appel->fonction));
