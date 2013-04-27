@@ -16,6 +16,8 @@
 #include "dico.h"
 #include "code3adr.h"
 
+void sem_parametres(n_l_exp *args, n_l_dec *params);
+
 int dico_indice_var;
 
 void sem_n_l_instr(n_l_instr *l_instr) {
@@ -503,21 +505,25 @@ n_type *sem_n_appel(n_appel *appel) {
     balise_text(sortie_semantique, "fonction", appel->fonction);
     //sem_n_l_exp(appel->args);
 
-    n_l_exp *args = appel->args;
-    n_l_dec *params = symboles.tab[dico_indice_var].param;
-    while (args != NULL && params != NULL) {
-        assert_types_sont_compatibles(__FUNCTION__, sem_n_exp(args->tete),
-                                                    params->tete->type, NULL);
-        args = args->queue;
-        params = params->queue;
-        ajoute_ligne(param, ligne-1, 0, NULL);
-    }
+    sem_parametres(appel->args, symboles.tab[dico_indice_var].param);
     ajoute_ligne(call, 0, 0, appel->fonction);
 
     balise_fermante(sortie_semantique, __FUNCTION__);
     return type_fonc;
 }
 
+void sem_parametres(n_l_exp *args, n_l_dec *params) {
+    if (args == NULL || params == NULL) {
+        if (args != NULL || params != NULL) {
+            erreur(__FUNCTION__, "err: wrong number of arg");
+        }
+        return;
+    }
+    sem_parametres(args->queue, params->queue);
+    assert_types_sont_compatibles(__FUNCTION__, sem_n_exp(args->tete),
+                                                params->tete->type, NULL);
+    ajoute_ligne(param, ligne-1, 0, NULL);
+}
 
 void assert_types_sont_compatibles(const char *call_from,
                                    n_type *t1, n_type *t2, operation *op) {
