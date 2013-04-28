@@ -58,6 +58,6 @@ operation MultiplyingOperator (void);
 n_exp   *Atom (void);
 n_exp   *AtomId (void);
 n_var   *VariableAccess (void);
-void erreur (const char *func, const char *msg);
+void erreur (const char *func, const char *format, ...);
 
 #endif /* __SYNTAX_H__ */

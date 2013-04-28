@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>      // strcpy()
+#include <stdarg.h>      // va_list, va_start, va_arg, va_end
 
 #include "lexical.h"     // yytext()
 #include "lexemes.h"
@@ -1068,9 +1069,14 @@ n_var *VariableAccess (void) {
     return NULL;
 }
 
-void erreur (const char *func, const char *msg) {
-    fprintf(stderr, "%s\t%s\n", func, msg);
-    exit(1);
+void erreur (const char *func, const char *format, ...) {
+    va_list ap;
+    fprintf(stderr, "%s\terr: ", func);
+    va_start(ap, format);
+    vfprintf(stderr, format, ap);
+    va_end(ap);
+    fprintf(stderr, "\n");
+    exit(EXIT_FAILURE);
 }
 
 //int main(int argc, char **argv) {
