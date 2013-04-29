@@ -78,34 +78,41 @@ n_prog *ProgramPascal (void) {
     n_l_fun_dec *S5 = NULL;
     n_instr     *S6 = NULL;
 
-    if (TEST_CC(PROGRAM)) {
-        MANGER_CC;
-        if (TEST_CC(ID)) {
-            balise_text(sortie_syntaxique, "id", yytext);
-            MANGER_CC;
-            if (TEST_CC(';')) {
-                MANGER_CC;
-                if (TEST_CC(VAR)) {
-                    S4 = VariableDefinitionList();
-                }
-                while (TEST_CC(PROCEDURE) || TEST_CC(FUNCTION)) {
-                    n_fun_dec *tmp_fun_dec = ProcFunDefinition();
-                    S5 = cree_n_l_fun_dec(tmp_fun_dec, S5);
-                }
-                if (TEST_CC(BEGIN)) {
-                    S6 = CompoundStatement();
-                    if (TEST_CC('.')) {
-                        S0 = cree_n_prog(S4, S5, S6);
-                        MANGER_CC;
-                        balise_fermante(sortie_syntaxique, __FUNCTION__);
-                        return S0;
-                    }
-                }
-            }
-        }
+    if (!TEST_CC(PROGRAM)) {
+        erreur(__FUNCTION__, "expected 'program' instead of '%s'",
+                             yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!TEST_CC(ID)) {
+        erreur(__FUNCTION__, "expected identifier after 'program' "
+                             "instead of '%s'", yytext);
+    }
+    balise_text(sortie_syntaxique, "id", yytext);
+    MANGER_CC;
+    if (!TEST_CC(';')) {
+        erreur(__FUNCTION__, "exprected ';' after program name instead of '%s'",
+                             yytext);
+    }
+    MANGER_CC;
+    if (TEST_CC(VAR)) {
+        S4 = VariableDefinitionList();
+    }
+    while (TEST_CC(PROCEDURE) || TEST_CC(FUNCTION)) {
+        n_fun_dec *tmp_fun_dec = ProcFunDefinition();
+        S5 = cree_n_l_fun_dec(tmp_fun_dec, S5);
+    }
+    if (!TEST_CC(BEGIN)) {
+        erreur(__FUNCTION__, "expected 'begin' instead of '%s'", yytext);
+    }
+    S6 = CompoundStatement();
+    if (!TEST_CC('.')) {
+        erreur(__FUNCTION__, "expected '.' at end of program before %s",
+                              yytext);
+    }
+    S0 = cree_n_prog(S4, S5, S6);
+    MANGER_CC;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // BlockBody -> [ VariableDefinitionList ] CompoundStatement
@@ -119,14 +126,13 @@ n_prog *BlockBody (void) {
     if (TEST_CC(VAR)) {
         S1 = VariableDefinitionList();
     }
-    if (TEST_CC(BEGIN)) {
-        S2 = CompoundStatement();
-        S0 = cree_n_prog(S1, NULL, S2);
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
+    if (TEST_CC(!BEGIN)) {
+        erreur(__FUNCTION__, "expected 'begin' instead of '%s'", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    S2 = CompoundStatement();
+    S0 = cree_n_prog(S1, NULL, S2);
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // VariableDefinitionList -> VAR VariableDefinition { VariableDefinition }
@@ -137,21 +143,22 @@ n_l_dec *VariableDefinitionList (void) {
     n_l_dec *S2 = NULL;
     n_l_dec *S3 = NULL;
 
-    if (TEST_CC(VAR)) {
-        MANGER_CC;
-        if (TEST_CC(ID)) {
-            S2 = VariableDefinition();
-            S0 = S2;
-            while (TEST_CC(ID)) {
-                S3 = VariableDefinition();
-                S0 = fusionne_n_l_dec(S3, S0);
-            }
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
-        }
+    if (!TEST_CC(VAR)) {
+        erreur(__FUNCTION__, "expected 'var' instead of '%s'", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!TEST_CC(ID)) {
+        erreur(__FUNCTION__, "expected identifier instead of '%s' "
+                             "when defining variables", yytext);
+    }
+    S2 = VariableDefinition();
+    S0 = S2;
+    while (TEST_CC(ID)) {
+        S3 = VariableDefinition();
+        S0 = fusionne_n_l_dec(S3, S0);
+    }
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // VariableDefinition -> VariableGroup ';'
@@ -160,16 +167,18 @@ n_l_dec *VariableDefinition (void) {
 
     n_l_dec *S0 = NULL;
 
-    if (TEST_CC(ID)) {
-        S0 = VariableGroup();
-        if (TEST_CC(';')) {
-            MANGER_CC;
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
-        }
+    if (!TEST_CC(ID)) {
+        erreur(__FUNCTION__, "expected identifier instead of '%s' "
+                             "when defining variables", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    S0 = VariableGroup();
+    if (!TEST_CC(';')) {
+        erreur(__FUNCTION__, "expected ';' instead of '%s' "
+                             "after variable(s) definition", yytext);
+    }
+    MANGER_CC;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // VariableGroup -> ID { ',' ID } ':' Type
@@ -181,42 +190,46 @@ n_l_dec *VariableGroup (void) {
     n_dec   *S3 = NULL;
     n_type  *S5 = NULL;
 
-    if (TEST_CC(ID)) {
-        balise_text(sortie_syntaxique, "id", yytext);
-        char *id = malloc(strlen(yytext));
-        strcpy(id, yytext);
-        S1 = cree_n_dec_var(id, NULL);  // type specifie apres
-        S0 = cree_n_l_dec(S1, S0);
-        MANGER_CC;
-        while (TEST_CC(',')) {
-            MANGER_CC;
-            if (TEST_CC(ID)) {
-                balise_text(sortie_syntaxique, "id", yytext);
-                id = malloc(strlen(yytext));
-                strcpy(id, yytext);
-                S3 = cree_n_dec_var(id, NULL);  // type specifie apres
-                S0 = cree_n_l_dec(S3, S0);
-                MANGER_CC;
-                continue;
-            }
-            erreur(__FUNCTION__, "");
-        }
-        if (TEST_CC(':')) {
-            MANGER_CC;
-            if (TEST_CC(INTEGER) || TEST_CC(BOOLEAN) || TEST_CC(ARRAY)) {
-                S5 = Type();
-                n_l_dec *cur_n_l_dec = S0;
-                while (cur_n_l_dec != NULL) {
-                    cur_n_l_dec->tete->type = S5;
-                    cur_n_l_dec = cur_n_l_dec->queue;
-                }
-                balise_fermante(sortie_syntaxique, __FUNCTION__);
-                return S0;
-            }
-        }
+    if (!TEST_CC(ID)) {
+        erreur(__FUNCTION__, "expected identifier instead of '%s' "
+                             "when defining variables", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    balise_text(sortie_syntaxique, "id", yytext);
+    char *id = malloc(strlen(yytext));
+    strcpy(id, yytext);
+    S1 = cree_n_dec_var(id, NULL);  // type specifie apres
+    S0 = cree_n_l_dec(S1, S0);
+    MANGER_CC;
+    while (TEST_CC(',')) {
+        MANGER_CC;
+        if (!TEST_CC(ID)) {
+            erreur(__FUNCTION__, "expected identifier instead of '%s' after ','",
+                                 yytext);
+        }
+        balise_text(sortie_syntaxique, "id", yytext);
+        id = malloc(strlen(yytext));
+        strcpy(id, yytext);
+        S3 = cree_n_dec_var(id, NULL);  // type specifie apres
+        S0 = cree_n_l_dec(S3, S0);
+        MANGER_CC;
+    }
+    if (!TEST_CC(':')) {
+        erreur(__FUNCTION__, "expected ':' instead of '%s' "
+                             "between idententifiers and type", yytext);
+    }
+    MANGER_CC;
+    if (!(TEST_CC(INTEGER) || TEST_CC(BOOLEAN) || TEST_CC(ARRAY))) {
+        erreur(__FUNCTION__, "unknown type %s, available types are : "
+                             "'integer', 'boolean' and 'array'", yytext);
+    }
+    S5 = Type();
+    n_l_dec *cur_n_l_dec = S0;
+    while (cur_n_l_dec != NULL) {
+        cur_n_l_dec->tete->type = S5;
+        cur_n_l_dec = cur_n_l_dec->queue;
+    }
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // Type -> INTEGER | BOOLEAN | ARRAY '[' NUMERAL DOTDOT NUMERAL ']' OF Type
@@ -241,37 +254,53 @@ n_type *Type (void) {
         return S0;
     }
 
-    if (!TEST_CC(ARRAY))
-        erreur(__FUNCTION__, "");
+    if (!TEST_CC(ARRAY)) {
+        erreur(__FUNCTION__, "unknown type %s, available types are : "
+                             "'integer', 'boolean' and 'array'", yytext);
+    }
     MANGER_CC;
-    if (!TEST_CC('['))
-        erreur(__FUNCTION__, "");
+    if (!TEST_CC('[')) {
+        erreur(__FUNCTION__, "expected '[' instead of '%s' "
+                             "when declaring array", yytext);
+    }
     MANGER_CC;
-    if (!TEST_CC(NUMERAL))
-        erreur(__FUNCTION__, "");
+    if (!TEST_CC(NUMERAL)) {
+        erreur(__FUNCTION__, "expected a numeral instead of '%s' "
+                             "in array's interval declaration", yytext);
+    }
     S5 = atoi(yytext);
     MANGER_CC;
-    if (!TEST_CC(DOTDOT))
-        erreur(__FUNCTION__, "");
+    if (!TEST_CC(DOTDOT)) {
+        erreur(__FUNCTION__, "expected '..' instead of '%s' "
+                             "in array's interval declaration", yytext);
+    }
     MANGER_CC;
-    if (!TEST_CC(NUMERAL))
-        erreur(__FUNCTION__, "");
+    if (!TEST_CC(NUMERAL)) {
+        erreur(__FUNCTION__, "expected a numeral instead of '%s' "
+                             "in array's interval declaration", yytext);
+    }
     S7 = atoi(yytext);
     MANGER_CC;
-    if (!TEST_CC(']'))
-        erreur(__FUNCTION__, "");
-    MANGER_CC;
-    if (!TEST_CC(OF))
-        erreur(__FUNCTION__, "");
-    MANGER_CC;
-    if (TEST_CC(INTEGER) || TEST_CC(BOOLEAN) || TEST_CC(ARRAY)) {
-        S10 = Type();
-        S0 = cree_n_type_array(S10, S5, S7);
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
+    if (!TEST_CC(']')) {
+        erreur(__FUNCTION__, "expected '[' instead of '%s' "
+                             "when declaring array", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!TEST_CC(OF)) {
+        erreur(__FUNCTION__, "expected 'of' instead of '%s' "
+                             "when declaring array, to specify type of elems",
+                             yytext);
+    }
+    MANGER_CC;
+    if (!(TEST_CC(INTEGER) || TEST_CC(BOOLEAN) || TEST_CC(ARRAY))) {
+        erreur(__FUNCTION__, "unknown type '%s' for array elements, "
+                             "available types are : "
+                             "'integer, 'boolean' and 'array'", yytext);
+    }
+    S10 = Type();
+    S0 = cree_n_type_array(S10, S5, S7);
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // ProcFunDefinition -> ProcedureDefinition | FunctionDefinition
@@ -290,7 +319,8 @@ n_fun_dec *ProcFunDefinition (void) {
         balise_fermante(sortie_syntaxique, __FUNCTION__);
         return S0;
     }
-    erreur(__FUNCTION__, "");
+    erreur(__FUNCTION__, "expected 'procedure' or 'function' instead of '%s'",
+                         yytext);
     return NULL;
 }
 
@@ -303,39 +333,50 @@ n_fun_dec *ProcedureDefinition (void) {
     n_l_dec   *S4 = NULL;
     n_prog    *S7 = NULL;
 
-    if (!TEST_CC(PROCEDURE))
-        erreur(__FUNCTION__, "");
+    if (!TEST_CC(PROCEDURE)) {
+        erreur(__FUNCTION__, "expected 'procedure' instead of '%s'",
+                             yytext);
+    }
     MANGER_CC;
-    if (!TEST_CC(ID))
-        erreur(__FUNCTION__, "");
+    if (!TEST_CC(ID)) {
+        erreur(__FUNCTION__, "expected identifier instead of '%s' "
+                             "in procedure definition", yytext);
+    }
     S2 = malloc(strlen(yytext));
     strcpy(S2, yytext);
     balise_text(sortie_syntaxique, "id", yytext);
     MANGER_CC;
     if (TEST_CC('(')) {
         MANGER_CC;
-        if (TEST_CC(VAR) || TEST_CC(ID)) {
-            S4 = ArgDefinitionList();
-            if (!TEST_CC(')'))
-                erreur(__FUNCTION__, "");
-        } else {
-            erreur(__FUNCTION__, "");
+        if (!(TEST_CC(VAR) || TEST_CC(ID))) {
+            erreur(__FUNCTION__, "expected 'var' or identifier instead of '%s' "
+                                 "inside procedure's argument definition",
+                                 yytext);
+        }
+        S4 = ArgDefinitionList();
+        if (!TEST_CC(')')) {
+            erreur(__FUNCTION__, "expected ')' instead of '%s' after "
+                                 "declaring procedure's arguments", yytext);
         }
     }
-    if (TEST_CC(';')) {
-        MANGER_CC;
-        if (TEST_CC(VAR) || TEST_CC(PROCEDURE) || TEST_CC(FUNCTION) || TEST_CC(BEGIN)) {
-            S7 = BlockBody();
-            if (TEST_CC(';')) {
-                S0 = cree_n_dec_fonc(S2, NULL, S4, S7->variables, S7->corps);
-                MANGER_CC;
-                balise_fermante(sortie_syntaxique, __FUNCTION__);
-                return S0;
-            }
-        }
+    if (!TEST_CC(';')) {
+        erreur(__FUNCTION__, "expected ';' instead of '%s' after procedure "
+                             "header definition", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!(TEST_CC(VAR) || TEST_CC(BEGIN))) {
+        erreur(__FUNCTION__, "expected 'var' or 'begin' instead of '%s' "
+                              "in body of procedure", yytext);
+    }
+    S7 = BlockBody();
+    if (!TEST_CC(';')) {
+        erreur(__FUNCTION__, "expected ';' instead of '%s' "
+                              "at end of procedure definition", yytext);
+    }
+    S0 = cree_n_dec_fonc(S2, NULL, S4, S7->variables, S7->corps);
+    MANGER_CC;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // FunctionDefinition -> FUNCTION ID '(' ArgDefinitionList ')' ':' Type ';' BlockBody ';'
@@ -348,44 +389,62 @@ n_fun_dec *FunctionDefinition (void) {
     n_type    *S7 = NULL;
     n_prog    *S9 = NULL;
 
-    if (!TEST_CC(FUNCTION))
-        erreur(__FUNCTION__, "");
+    if (!TEST_CC(FUNCTION)) {
+        erreur(__FUNCTION__, "expected 'function' instead of '%s'");
+    }
     MANGER_CC;
-    if (!TEST_CC(ID))
-        erreur(__FUNCTION__, "");
+    if (!TEST_CC(ID)) {
+        erreur(__FUNCTION__, "expected identifier instead of '%s' "
+                             "in function definition", yytext);
+    }
     S2 = malloc(strlen(yytext));
     strcpy(S2, yytext);
     balise_text(sortie_syntaxique, "id", yytext);
     MANGER_CC;
-    if (!TEST_CC('('))
-        erreur(__FUNCTION__, "");
-    MANGER_CC;
-    if (TEST_CC(VAR) || TEST_CC(ID)) {
-        S4 = ArgDefinitionList();
-        if (!TEST_CC(')'))
-            erreur(__FUNCTION__, "");
-        MANGER_CC;
-        if (!TEST_CC(':'))
-            erreur(__FUNCTION__, "");
-        MANGER_CC;
-        if (TEST_CC(INTEGER) || TEST_CC(BOOLEAN) || TEST_CC(ARRAY)) {
-            S7 = Type();
-            if (TEST_CC(';')) {
-                MANGER_CC;
-                if (TEST_CC(VAR) || TEST_CC(PROCEDURE) || TEST_CC(FUNCTION) || TEST_CC(BEGIN)) {
-                    S9 = BlockBody();
-                    if (TEST_CC(';')) {
-                        S0 = cree_n_dec_fonc(S2, S7, S4, S9->variables, S9->corps);
-                        MANGER_CC;
-                        balise_fermante(sortie_syntaxique, __FUNCTION__);
-                        return S0;
-                    }
-                }
-            }
-        }
+    if (!TEST_CC('(')) {
+        erreur(__FUNCTION__, "expected '(' instead of '%s' in function header "
+                             "to declare it's arguments",
+                             yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!(TEST_CC(VAR) || TEST_CC(ID))) {
+        erreur(__FUNCTION__, "expected 'var' or identifier instead of '%s' "
+                             "inside procedure's argument definition", yytext);
+    }
+    S4 = ArgDefinitionList();
+    if (!TEST_CC(')')) {
+        erreur(__FUNCTION__, "expected ')' instead of '%s' after "
+                             "declaring function's arguments", yytext);
+    }
+    MANGER_CC;
+    if (!TEST_CC(':')) {
+        erreur(__FUNCTION__, "expected ';' instead of '%s' in header "
+                             "to declare it's return type", yytext);
+    }
+    MANGER_CC;
+    if (!(TEST_CC(INTEGER) || TEST_CC(BOOLEAN) || TEST_CC(ARRAY))) {
+        erreur(__FUNCTION__, "unknown type '%s' for function return type",
+                             yytext);
+    }
+    S7 = Type();
+    if (!TEST_CC(';')) {
+        erreur(__FUNCTION__, "expected ';' instead of '%s' after function "
+                             "header definition", yytext);
+    }
+    MANGER_CC;
+    if (!(TEST_CC(VAR) || TEST_CC(BEGIN))) {
+        erreur(__FUNCTION__, "expected 'var' or 'begin' instead of '%s' "
+                              "in body of definition", yytext);
+    }
+    S9 = BlockBody();
+    if (!TEST_CC(';')) {
+        erreur(__FUNCTION__, "expected ';' instead of '%s' "
+                              "at end of function definition", yytext);
+    }
+    S0 = cree_n_dec_fonc(S2, S7, S4, S9->variables, S9->corps);
+    MANGER_CC;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // ArgDefinitionList -> ArgDefinition { ';' ArgDefinition }
@@ -396,23 +455,23 @@ n_l_dec *ArgDefinitionList (void) {
     n_l_dec *S1 = NULL;
     n_l_dec *S3 = NULL;
 
-    if (TEST_CC(VAR) || TEST_CC(ID)) {
-        S1 = ArgDefinition();
-        S0 = S1;
-        while (TEST_CC(';')) {
-            MANGER_CC;
-            if (TEST_CC(VAR) || TEST_CC(ID)) {
-                S3 = ArgDefinition();
-                S0 = fusionne_n_l_dec(S0, S3);
-            } else {
-                erreur(__FUNCTION__, "");
-            }
-        }
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
+    if (!(TEST_CC(VAR) || TEST_CC(ID))) {
+        erreur(__FUNCTION__, "expected 'var' or identifier instead of '%s' "
+                             "in argument definition list", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    S1 = ArgDefinition();
+    S0 = S1;
+    while (TEST_CC(';')) {
+        MANGER_CC;
+        if (!(TEST_CC(VAR) || TEST_CC(ID))) {
+            erreur(__FUNCTION__, "expected 'var' or identifier instead of '%s'"
+                                 "in argument definition list", yytext);
+        }
+        S3 = ArgDefinition();
+        S0 = fusionne_n_l_dec(S0, S3);
+    }
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // ArgDefinition -> [ VAR ] VariableGroup
@@ -424,13 +483,13 @@ n_l_dec *ArgDefinition (void) {
     if (TEST_CC(VAR)) {
         MANGER_CC;
     }
-    if (TEST_CC(ID)) {
-        S0 = VariableGroup();
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
+    if (!TEST_CC(ID)) {
+        erreur(__FUNCTION__, "expected identifier instead of '%s' when "
+                             "defining argument", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    S0 = VariableGroup();
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // Statement -> StatementId | IfStatement | WhileStatement | CompoundStatement | WriteStatement | Empty
@@ -477,30 +536,31 @@ n_instr *StatementId (void) {
     n_appel *S4 = NULL;
     n_instr *S5 = NULL;
 
-    if (TEST_CC(ID) || TEST_CC(READ) || TEST_CC(WRITE)) {
-        balise_text(sortie_syntaxique, "id", yytext);
-        char *id = malloc(strlen(yytext));
-        strcpy(id, yytext);
-        MANGER_CC;
-        if (TEST_CC('(')) {
-            S4 = ProcedureCall();
-            S4->fonction = id;
-            S0 = cree_n_instr_appel(S4);
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
-        }
-        if (TEST_CC('[') || TEST_CC(AFFECT)) {
-            S5 = AssignmentStatement();
-            // au retour de AssignmentStatement(), on sait qu'on a une instr
-            // de type affectInstr
-            S5->u.affecte_.var->nom = id;
-            S0 = S5;
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
-        }
+    if (!(TEST_CC(ID))) {
+        erreur(__FUNCTION__, "expected identifier instead of '%s' "
+                             "in a procedure call or assignment statement",
+                             yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    balise_text(sortie_syntaxique, "id", yytext);
+    char *id = malloc(strlen(yytext));
+    strcpy(id, yytext);
+    MANGER_CC;
+    if (TEST_CC('(')) {
+        S4 = ProcedureCall();
+        S4->fonction = id;
+        S0 = cree_n_instr_appel(S4);
+    } else if (TEST_CC('[') || TEST_CC(AFFECT)) {
+        S5 = AssignmentStatement();
+        // au retour de AssignmentStatement(), on sait qu'on a une instr
+        // de type affectInstr
+        S5->u.affecte_.var->nom = id;
+        S0 = S5;
+    } else {
+        erreur(__FUNCTION__, "expected '(', '[' or ':=' instead of '%s' "
+                             "after %s", id, yytext);
+    }
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // AssignmentStatement -> VariableAccess AFFECT Expression
@@ -511,20 +571,24 @@ n_instr *AssignmentStatement (void) {
     n_var   *S1 = NULL;
     n_exp   *S3 = NULL;
 
-    if (TEST_CC('[') || TEST_CC(AFFECT)) {
-        S1 = VariableAccess();
-        if (TEST_CC(AFFECT)) {
-            MANGER_CC;
-            if (TEST_PREM_EXPR) {
-                S3 = Expression();
-                S0 = cree_n_instr_affect(S1, S3);
-                balise_fermante(sortie_syntaxique, __FUNCTION__);
-                return S0;
-            }
-        }
+    if (!(TEST_CC('[') || TEST_CC(AFFECT))) {
+        erreur(__FUNCTION__, "expected '[' or ':=' instead of '%s' "
+                             "in assignment statement", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    S1 = VariableAccess();
+    if (!TEST_CC(AFFECT)) {
+        erreur(__FUNCTION__, "expected ':=' instead of '%s' "
+                             "in assignment statement", yytext);
+    }
+    MANGER_CC;
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in assignment statement", yytext);
+    }
+    S3 = Expression();
+    S0 = cree_n_instr_affect(S1, S3);
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // ProcedureCall -> '(' [ ParameterList ] ')'
@@ -534,20 +598,25 @@ n_appel *ProcedureCall (void) {
     n_appel *S0 = NULL;
     n_l_exp *S2 = NULL;
 
-    if (TEST_CC('(')) {
-        MANGER_CC;
-        if (TEST_PREM_EXPR) {
-            S2 = ParameterList();
-        }
-        if (TEST_CC(')')) {
-            MANGER_CC;
-            S0 = cree_n_appel(NULL, S2);    // id mis a de la remontee
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
-        }
+    if (!TEST_CC('(')) {
+        erreur(__FUNCTION__, "expected '(' instead of '%s' to define the "
+                             "procedure's parameter when calling",
+                             yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in parameters of procedure call", yytext);
+    }
+    S2 = ParameterList();
+    if (!TEST_CC(')')) {
+        erreur(__FUNCTION__, "expected ')' instead of '%s' after "
+                             "procedure's parameters when calling", yytext);
+    }
+    MANGER_CC;
+    S0 = cree_n_appel(NULL, S2);    // id mis a de la remontee
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // FunctionCall -> '(' [ ParameterList ] ')'
@@ -557,20 +626,25 @@ n_appel *FunctionCall (void) {
     n_appel *S0 = NULL;
     n_l_exp *S2 = NULL;
 
-    if (TEST_CC('(')) {
-        MANGER_CC;
-        if (TEST_PREM_EXPR) {
-            S2 = ParameterList();
-        }
-        if (TEST_CC(')')) {
-            MANGER_CC;
-            S0 = cree_n_appel(NULL, S2);
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
-        }
+    if (!TEST_CC('(')) {
+        erreur(__FUNCTION__, "expected '(' instead of '%s' to define the "
+                             "function's parameter when calling",
+                             yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in parameters of function call", yytext);
+    }
+    S2 = ParameterList();
+    if (!TEST_CC(')')) {
+        erreur(__FUNCTION__, "expected ')' instead of '%s' after "
+                             "function's parameters when calling", yytext);
+    }
+    MANGER_CC;
+    S0 = cree_n_appel(NULL, S2);
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // ParameterList -> Expression { ',' Expression }
@@ -582,23 +656,23 @@ n_l_exp *ParameterList (void) {
     n_exp   *S3 = NULL;
 
     // liste remplie a l'envers
-    if (TEST_PREM_EXPR) {
-        S1 = Expression();
-        S0 = cree_n_l_exp(S1, S0);
-        while (TEST_CC(',')) {
-            MANGER_CC;
-            if (TEST_PREM_EXPR) {
-                S3 = Expression();
-                S0 = cree_n_l_exp(S3, S0);
-            } else {
-                erreur(__FUNCTION__, "");
-            }
-        }
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in parameter list", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    S1 = Expression();
+    S0 = cree_n_l_exp(S1, S0);
+    while (TEST_CC(',')) {
+        MANGER_CC;
+        if (!TEST_PREM_EXPR) {
+            erreur(__FUNCTION__, "expected an expression's premier instead "
+                                 "of '%s' in parameter list", yytext);
+        }
+        S3 = Expression();
+        S0 = cree_n_l_exp(S3, S0);
+    }
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // IfStatement -> IF Expression THEN Statement [ ELSE Statement ]
@@ -610,32 +684,36 @@ n_instr *IfStatement (void) {
     n_instr *S4 = NULL;
     n_instr *S6 = NULL;
 
-    if (TEST_CC(IF)) {
-        MANGER_CC;
-        if (TEST_PREM_EXPR) {
-            S2 = Expression();
-            if (TEST_CC(THEN)) {
-                MANGER_CC;
-                if (TEST_PREM_STMT) {
-                    S4 = Statement();
-                    if (TEST_CC(ELSE)) {
-                        MANGER_CC;
-                        if (TEST_PREM_STMT) {
-                            S6 = Statement();
-                        } else {
-                            erreur(__FUNCTION__, "");
-                            return NULL;
-                        }
-                    }
-                    S0 = cree_n_instr_si(S2, S4, S6);
-                    balise_fermante(sortie_syntaxique, __FUNCTION__);
-                    return S0;
-                }
-            }
-        }
+    if (!TEST_CC(IF)) {
+        erreur(__FUNCTION__, "expected 'if' instead of '%s' in if statement",
+                             yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in if condition", yytext);
+    }
+    S2 = Expression();
+    if (!TEST_CC(THEN)) {
+        erreur(__FUNCTION__, "expected 'then' after if condition", yytext);
+    }
+    MANGER_CC;
+    if (!TEST_PREM_STMT) {
+        erreur(__FUNCTION__, "expected a statement's premier instead of '%s' "
+                             "in 'if' block", yytext);
+    }
+    S4 = Statement();
+    if (TEST_CC(ELSE)) {
+        MANGER_CC;
+        if (!TEST_PREM_STMT) {
+            erreur(__FUNCTION__, "expected a statement's premier instead "
+                                 "of '%s' in 'then' block", yytext);
+        }
+        S6 = Statement();
+    }
+    S0 = cree_n_instr_si(S2, S4, S6);
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // WhileStatement -> WHILE Expression DO Statement
@@ -646,23 +724,29 @@ n_instr *WhileStatement (void) {
     n_exp   *S1 = NULL;
     n_instr *S3 = NULL;
 
-    if (TEST_CC(WHILE)) {
-        MANGER_CC;
-        if (TEST_PREM_EXPR) {
-            S1 = Expression();
-            if (TEST_CC(DO)) {
-                MANGER_CC;
-                if (TEST_PREM_STMT) {
-                    S3 = Statement();
-                    S0 = cree_n_instr_tantque(S1, S3);
-                    balise_fermante(sortie_syntaxique, __FUNCTION__);
-                    return S0;
-                }
-            }
-        }
+    if (!TEST_CC(WHILE)) {
+        erreur(__FUNCTION__, "expected 'while' instead of '%s' in 'while' "
+                             "statement", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in while condition", yytext);
+    }
+    S1 = Expression();
+    if (!TEST_CC(DO)) {
+        erreur(__FUNCTION__, "exprected 'do' instead of '%s', in while "
+                             "statement", yytext);
+    }
+    MANGER_CC;
+    if (!TEST_PREM_STMT) {
+        erreur(__FUNCTION__, "expected a statement's premier instead of '%s' "
+                             "in 'while' block", yytext);
+    }
+    S3 = Statement();
+    S0 = cree_n_instr_tantque(S1, S3);
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // CompoundStatement -> BEGIN { Statement ';' } END
@@ -673,26 +757,28 @@ n_instr *CompoundStatement (void) {
     n_instr *S1 = NULL;
     n_l_instr *n_l_instr = NULL;
 
-    if (TEST_CC(BEGIN)) {
-        MANGER_CC;
-        while (TEST_PREM_STMT) {
-            S1 = Statement();
-            n_l_instr = cree_n_l_instr(S1, n_l_instr);
-            if (TEST_CC(';')) {
-                MANGER_CC;
-                continue;
-            }
-            erreur(__FUNCTION__, "");
-        }
-        if (TEST_CC(END)) {
-            S0 = cree_n_instr_bloc(n_l_instr);
-            MANGER_CC;
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
-        }
+    if (!TEST_CC(BEGIN)) {
+        erreur(__FUNCTION__, "expected 'begin' instead of '%s' in compound "
+                             "statement", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    while (TEST_PREM_STMT) {
+        S1 = Statement();
+        n_l_instr = cree_n_l_instr(S1, n_l_instr);
+        if (!TEST_CC(';')) {
+            erreur(__FUNCTION__, "expected ';' instead of '%s' after statement "
+                                 "in compound statement", yytext);
+        }
+        MANGER_CC;
+    }
+    if (!TEST_CC(END)) {
+        erreur(__FUNCTION__, "expected 'end' instead of '%s' at end of "
+                             "compound statement", yytext);
+    }
+    S0 = cree_n_instr_bloc(n_l_instr);
+    MANGER_CC;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // WriteStatement -> WRITE '(' Expression ')'
@@ -702,23 +788,29 @@ n_instr *WriteStatement (void) {
     n_instr *S0 = NULL;
     n_exp   *S3 = NULL;
 
-    if (TEST_CC(WRITE)) {
-        MANGER_CC;
-        if (TEST_CC('(')) {
-            MANGER_CC;
-            if (TEST_PREM_EXPR) {
-                S3 = Expression();
-                if (TEST_CC(')')) {
-                    S0 = cree_n_instr_ecrire(S3);
-                    MANGER_CC;
-                    balise_fermante(sortie_syntaxique, __FUNCTION__);
-                    return S0;
-                }
-            }
-        }
+    if (!TEST_CC(WRITE)) {
+        erreur(__FUNCTION__, "expected 'write' instead of '%s' in write "
+                             "statement", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    MANGER_CC;
+    if (!TEST_CC('(')) {
+        erreur(__FUNCTION__, "expected '(' instead of '%s' for write argument",
+                             yytext);
+    }
+    MANGER_CC;
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "for write argument", yytext);
+    }
+    S3 = Expression();
+    if (!TEST_CC(')')) {
+        erreur(__FUNCTION__, "expected ')' instead of '%s' for write argument",
+                             yytext);
+    }
+    S0 = cree_n_instr_ecrire(S3);
+    MANGER_CC;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // Expression -> AndExpression [ OR AndExpression ]
@@ -729,19 +821,22 @@ n_exp *Expression (void) {
     n_exp *S1 = NULL;
     n_exp *S3 = NULL;
 
-    if (!TEST_PREM_EXPR)
-        erreur(__FUNCTION__, "");
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in expression", yytext);
+    }
     S1 = AndExpression();
     if (TEST_CC(OR)) {
         MANGER_CC;
-        if (!TEST_PREM_EXPR)
-            erreur(__FUNCTION__, "");
+        if (!TEST_PREM_EXPR) {
+            erreur(__FUNCTION__, "expected an expression's premier instead of "
+                                 "%s after or", yytext);
+        }
         S3 = AndExpression();
         S0 = cree_n_exp_op(ou, S1, S3);
     } else {
         S0 = S1;
     }
-
     balise_fermante(sortie_syntaxique, __FUNCTION__);
     return S0;
 }
@@ -754,19 +849,22 @@ n_exp *AndExpression (void) {
     n_exp *S1 = NULL;
     n_exp *S3 = NULL;
 
-    if (!TEST_PREM_EXPR)
-        erreur(__FUNCTION__, "");
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in expression", yytext);
+    }
     S1 = RelationExpression();
     if (TEST_CC(AND)) {
         MANGER_CC;
-        if (!TEST_PREM_EXPR)
-            erreur(__FUNCTION__, "");
+        if (!TEST_PREM_EXPR) {
+            erreur(__FUNCTION__, "expected an expression's premier instead of "
+                                 "%s after and", yytext);
+        }
         S3 = RelationExpression();
         S0 = cree_n_exp_op(et, S1, S3);
     } else {
         S0 = S1;
     }
-
     balise_fermante(sortie_syntaxique, __FUNCTION__);
     return S0;
 }
@@ -780,25 +878,28 @@ n_exp *RelationExpression (void) {
     operation S2;
     n_exp *S3 = NULL;
 
-    if (TEST_PREM_EXPR) {
-        S1 = SimpleExpression();
-        if (TEST_CC('<')   || TEST_CC('=')  || TEST_CC('>') ||
-            TEST_CC(INFEG) || TEST_CC(DIFF) || TEST_CC(SUPEG)) {
-            S2 = Relation();
-            if (TEST_PREM_EXPR) {
-                S3 = SimpleExpression();
-                S0 = cree_n_exp_op(S2, S1, S3);
-                balise_fermante(sortie_syntaxique, __FUNCTION__);
-                return S0;
-            }
-        } else {
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            S0 = S1;
-            return S0;
-        }
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in a relation expression", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    S1 = SimpleExpression();
+    if (TEST_CC('<')   || TEST_CC('=')  || TEST_CC('>') ||
+        TEST_CC(INFEG) || TEST_CC(DIFF) || TEST_CC(SUPEG)) {
+        char *op_text = malloc(strlen(yytext));
+        strcpy(op_text, yytext);
+        S2 = Relation();
+        if (!TEST_PREM_EXPR) {
+            erreur(__FUNCTION__, "expected an expression's premier instead of "
+                                 "'%s' after relation '%s'", yytext, op_text);
+        }
+        free (op_text);
+        S3 = SimpleExpression();
+        S0 = cree_n_exp_op(S2, S1, S3);
+    } else {
+        S0 = S1;
+    }
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // Relation -> '<' || '=' || '>' || INFEG || DIFF || SUPEG
@@ -818,7 +919,9 @@ operation Relation (void) {
             return ops[i];
         }
     }
-    erreur(__FUNCTION__, "");
+    erreur(__FUNCTION__, "unknown operator '%s' for relation, available "
+                         "operators are '<', '<=', '=', '<>', '>' and '>='",
+                         yytext);
     return 0;
 }
 
@@ -831,24 +934,24 @@ n_exp *SimpleExpression (void) {
     operation S2;
     n_exp *S3 = NULL;
 
-    if (TEST_PREM_EXPR) {
-        S1 = Factor();
-        if (TEST_CC('+') || TEST_CC('-')) {
-            S2 = AddingOperator();
-            if (TEST_PREM_EXPR) {
-                S3 = SimpleExpression();
-                S0 = cree_n_exp_op(S2, S1, S3);
-                balise_fermante(sortie_syntaxique, __FUNCTION__);
-                return S0;
-            }
-            erreur(__FUNCTION__, "");
-        }
-        S0 = S1;
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
+    if (!TEST_PREM_EXPR) {
+        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                             "in a simple expression", yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    S1 = Factor();
+    if (TEST_CC('+') || TEST_CC('-')) {
+        S2 = AddingOperator();
+        if (!TEST_PREM_EXPR) {
+            erreur(__FUNCTION__, "expected an expression's premier instead of "
+                                 "'%s' after adding operator", yytext);
+        }
+        S3 = SimpleExpression();
+        S0 = cree_n_exp_op(S2, S1, S3);
+    } else {
+        S0 = S1;
+    }
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // AddingOperator -> '+' | '-' || OR
@@ -862,7 +965,8 @@ operation AddingOperator (void) {
     } else if (TEST_CC('-')) {
         op = moins;
     } else {
-        erreur(__FUNCTION__, "");
+        erreur(__FUNCTION__, "unknown adding operator '%s', "
+                             "expected '+' or '-'", yytext);
     }
 
     balise_text(sortie_syntaxique, "OP", yytext);
@@ -886,31 +990,31 @@ n_exp *Factor (void) {
         S1 = UnaryRelation();
         hasUnaryOperation = 1;
     }
-    if (TEST_PREM_ATOM) {
-        S2 = Atom();
-        if (TEST_CC('*') || TEST_CC(DIV) || TEST_CC(MOD)) {
-            S3 = MultiplyingOperator();
-            if (TEST_PREM_EXPR) {
-                S4 = Factor();
-                S0 = cree_n_exp_op(S3, S2, S4);
-                if (hasUnaryOperation) {
-                    S0 = cree_n_exp_op(S1, S0, NULL);
-                }
-                balise_fermante(sortie_syntaxique, __FUNCTION__);
-                return S0;
-            }
+    if (!TEST_PREM_ATOM) {
+        erreur(__FUNCTION__, "expected an atom's premier instead of '%s' "
+                             "in a factor", yytext);
+    }
+    S2 = Atom();
+    if (TEST_CC('*') || TEST_CC(DIV) || TEST_CC(MOD)) {
+        S3 = MultiplyingOperator();
+        if (!TEST_PREM_EXPR) {
+            erreur(__FUNCTION__, "expected an expression's premier instead "
+                                 "of '%s' after multiplying operator", yytext);
+        }
+        S4 = Factor();
+        S0 = cree_n_exp_op(S3, S2, S4);
+        if (hasUnaryOperation) {
+            S0 = cree_n_exp_op(S1, S0, NULL);
+        }
+    } else {
+        if (hasUnaryOperation) {
+            S0 = cree_n_exp_op(S1, S2, NULL);
         } else {
-            if (hasUnaryOperation) {
-                S0 = cree_n_exp_op(S1, S2, NULL);
-            } else {
-                S0 = S2;
-            }
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
+            S0 = S2;
         }
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // UnaryRelation -> '-' | NOT
@@ -924,14 +1028,15 @@ operation UnaryRelation (void) {
     } else if (TEST_CC(NOT)) {
         op = non;
     } else {
-        erreur(__FUNCTION__, "");
+        erreur(__FUNCTION__, "unknown unary relation '%s', available "
+                             "operators are '-' and 'not'", yytext);
     }
     MANGER_CC;
     balise_fermante(sortie_syntaxique, __FUNCTION__);
     return op;
 }
 
-// MultiplyingOperator -> '*' | DIV | MOD | AND
+// MultiplyingOperator -> '*' | DIV | MOD
 operation MultiplyingOperator (void) {
     balise_ouvrante(sortie_syntaxique, __FUNCTION__);
 
@@ -944,7 +1049,8 @@ operation MultiplyingOperator (void) {
     } else if (TEST_CC(MOD)) {
         op = modulo;
     } else {
-        erreur(__FUNCTION__, "");
+        erreur(__FUNCTION__, "unknown multiplying operator '%s', available "
+                             "operators are '*', 'div' and 'mod'", yytext);
     }
     MANGER_CC;
     balise_fermante(sortie_syntaxique, __FUNCTION__);
@@ -959,55 +1065,52 @@ n_exp *Atom (void) {
 
     if (TEST_CC(ID)) {
         S0 = AtomId();
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
     }
     if (TEST_CC(READ)) {
         MANGER_CC;
-        if (!TEST_CC('('))
-            erreur(__FUNCTION__, "");
+        if (!TEST_CC('(')) {
+            erreur(__FUNCTION__, "expected '(' instead of '%s' after 'read'",
+                                 yytext);
+        }
         MANGER_CC;
-        if (!TEST_CC(')'))
-            erreur(__FUNCTION__, "");
+        if (!TEST_CC(')')) {
+            erreur(__FUNCTION__, "expected ')' instead of '%s' after 'read('",
+                                 yytext);
+        }
         MANGER_CC;
         S0 = cree_n_exp_lire();
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
     }
     if (TEST_CC(NUMERAL)) {
         balise_text(sortie_syntaxique, "NUMERAL", yytext);
         S0 = cree_n_exp_entier(atoi(yytext));
         MANGER_CC;
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
     }
     if (TEST_CC(TRUE)) {
         balise_text(sortie_syntaxique, "BOOLEAN", yytext);
         S0 = cree_n_exp_true();
         MANGER_CC;
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
     }
     if (TEST_CC(FALSE)) {
         balise_text(sortie_syntaxique, "BOOLEAN", yytext);
         S0 = cree_n_exp_false();
         MANGER_CC;
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
     }
     if (TEST_CC('(')) {
         MANGER_CC;
-        if (TEST_PREM_EXPR) {
-            S0 = Expression();
-            if (TEST_CC(')')) {
-                MANGER_CC;
-                balise_fermante(sortie_syntaxique, __FUNCTION__);
-                return S0;
-            }
+        if (!TEST_PREM_EXPR) {
+            erreur(__FUNCTION__, "expected an expression's premier instead "
+                                 "of '%s' after '('", yytext);
         }
+        S0 = Expression();
+        if (!TEST_CC(')')) {
+            erreur(__FUNCTION__, "expected ')' instead of '%s' to close "
+                                 "parenthezed expression previously opened",
+                                 yytext);
+        }
+        MANGER_CC;
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // AtomId -> ID FunctionCall | ID VariableAccess
@@ -1018,28 +1121,25 @@ n_exp *AtomId (void) {
     n_appel *S6 = NULL;
     n_var   *S8 = NULL;
 
-    if (TEST_CC(ID)) {
-        balise_text(sortie_syntaxique, "id", yytext);
-        int old_cc = cc;
-        char *id = malloc(strlen(yytext));
-        strcpy(id, yytext);
-        MANGER_CC;
-        if (TEST_CC('(')) {
-            S6 = FunctionCall();
-            S6->fonction = id;
-            S0 = cree_n_exp_appel(S6);
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
-        } else if (old_cc != READ && old_cc != WRITE) {
-            S8 = VariableAccess();
-            S8->nom = id;
-            S0 = cree_n_exp_var(S8);
-            balise_fermante(sortie_syntaxique, __FUNCTION__);
-            return S0;
-        }
+    if (!TEST_CC(ID)) {
+        erreur(__FUNCTION__, "expected identifier instead of '%s' in an AtomId",
+                             yytext);
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    balise_text(sortie_syntaxique, "id", yytext);
+    char *id = malloc(strlen(yytext));
+    strcpy(id, yytext);
+    MANGER_CC;
+    if (TEST_CC('(')) {
+        S6 = FunctionCall();
+        S6->fonction = id;
+        S0 = cree_n_exp_appel(S6);
+    } else {
+        S8 = VariableAccess();
+        S8->nom = id;
+        S0 = cree_n_exp_var(S8);
+    }
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 // VariableAccess -> '[' Expression ']'
@@ -1051,22 +1151,21 @@ n_var *VariableAccess (void) {
 
     if (TEST_CC('[')) {
         MANGER_CC;
-        if (TEST_PREM_EXPR) {
-            S2 = Expression();
-            if (TEST_CC(']')) {
-                MANGER_CC;
-                balise_fermante(sortie_syntaxique, __FUNCTION__);
-                S0 = cree_n_var_indicee(NULL, S2);
-                return S0;
-            }
+        if (!TEST_PREM_EXPR) {
+            erreur(__FUNCTION__, "expected an expression's premier instead of "
+                                 "'%s' after '['", yytext);
         }
+        S2 = Expression();
+        if (!TEST_CC(']')) {
+            erreur(__FUNCTION__, "expected ']' after index of array", yytext);
+        }
+        MANGER_CC;
+        S0 = cree_n_var_indicee(NULL, S2);  // nom est fixe dans AtomId
     } else {
-        S0 = cree_n_var_simple(NULL);
-        balise_fermante(sortie_syntaxique, __FUNCTION__);
-        return S0;
+        S0 = cree_n_var_simple(NULL);       // nom est fixe dans AtomId
     }
-    erreur(__FUNCTION__, "");
-    return NULL;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
 }
 
 void erreur (const char *func, const char *format, ...) {
@@ -1078,17 +1177,3 @@ void erreur (const char *func, const char *format, ...) {
     fprintf(stderr, "\n");
     exit(EXIT_FAILURE);
 }
-
-//int main(int argc, char **argv) {
-//    if (argc != 1 + 2) {
-//        fprintf(stderr, "Usage : %s <input> <output>\n", argv[0]);
-//        return 1;
-//    }
-//
-//    yyin = fopen(argv[1], "r");
-//    sortie_xml = fopen(argv[2], "w");
-//    MANGER_CC;
-//    n_prog *prog = ProgramPascal();
-//
-//    return 0;
-//}
