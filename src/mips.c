@@ -14,6 +14,8 @@
 #include "code3adr.h"       // ligne
 #include "parcours.h"       // MAX_PARAM
 
+int calcul_tab_offset(struct triplet *code, int *dernier, int l);
+
 variable* fonction = NULL;
 int params [MAX_PARAM];
 int nb_param = 0;
@@ -239,21 +241,8 @@ void genere_mips() {
             break;
           case ltab:
             {
-            variable v = symboles.tab[recherche_symbole(code[l].var)];
-            int reg_adr_var, reg_offset, reg_sizeof_int;
-            printf("addi\t$t%i, $t%i, %i\n",
-                    reg_offset=cherche_registre_libre(dernier, l),
-                    trouve_registre_associe(code[l].arg2),
-                    v.adresse - v.type->debut);
-            reg[reg_offset] = l;
-            printf("\tli\t$t%i, %i\n",
-                    reg_sizeof_int=cherche_registre_libre(dernier, l),
-                    wordsize);
-            reg[reg_sizeof_int] = l;
-            printf("\tmult\t$t%i, $t%i\n",
-                    reg_offset,
-                    reg_sizeof_int);
-            printf("\tmflo\t$t%i\n", reg_offset);
+            int reg_adr_var, reg_offset;
+            reg_offset = calcul_tab_offset(code, dernier, l);
             printf("\tla\t$t%i, var\n",
                     reg_adr_var=cherche_registre_libre(dernier, l));
             reg[reg_adr_var] = l;
@@ -264,7 +253,6 @@ void genere_mips() {
             printf("\tlw\t$t%i, 0($t%i)\n",
                     r=cherche_registre_libre(dernier, l),
                     reg_adr_var);
-            reg[reg_sizeof_int] = -1;
             reg[reg_offset] = -1;
             reg[reg_adr_var] = -1;
             reg[r] = l;
@@ -272,21 +260,8 @@ void genere_mips() {
             break;
           case stab:
             {
-            variable v = symboles.tab[recherche_symbole(code[l].var)];
-            int reg_adr_var, reg_offset, reg_sizeof_int;
-            printf("addi\t$t%i, $t%i, %i\n",
-                    reg_offset=cherche_registre_libre(dernier, l),
-                    trouve_registre_associe(code[l].arg2),
-                    v.adresse - v.type->debut);
-            reg[reg_offset] = l;
-            printf("\tli\t$t%i, %i\n",
-                    reg_sizeof_int=cherche_registre_libre(dernier, l),
-                    wordsize);
-            reg[reg_sizeof_int] = l;
-            printf("\tmult\t$t%i, $t%i\n",
-                    reg_offset,
-                    reg_sizeof_int);
-            printf("\tmflo\t$t%i\n", reg_offset);
+            int reg_adr_var, reg_offset;
+            reg_offset = calcul_tab_offset(code, dernier, l);
             printf("\tla\t$t%i, var\n",
                     reg_adr_var=cherche_registre_libre(dernier, l));
             reg[reg_adr_var] = l;
@@ -297,7 +272,6 @@ void genere_mips() {
             printf("\tsw\t$t%i, 0($t%i)\n",
                     trouve_registre_associe(code[l].arg1),
                     reg_adr_var);
-            reg[reg_sizeof_int] = -1;
             reg[reg_offset] = -1;
             reg[reg_adr_var] = -1;
             }
@@ -392,4 +366,26 @@ void genere_mips() {
     }
     printf("j%i:\tli $v0, 10\n", l);
     printf("\tsyscall\t\t# exit\n");
+}
+
+/* genere le code qui calcule l'offset physique pour acceder au tableau
+ * renvoie le numero du registre qui contient cet offset */
+int calcul_tab_offset(struct triplet *code, int *dernier, int l) {
+    int reg_offset, reg_sizeof_int;
+    variable v = symboles.tab[recherche_symbole(code[l].var)];
+    /* calcul de l'offset logique (indice + adr - debut) */
+    printf("addi\t$t%i, $t%i, %i\n",
+            reg_offset=cherche_registre_libre(dernier, l),
+            trouve_registre_associe(code[l].arg2),
+            v.adresse - v.type->debut);
+    reg[reg_offset] = l;
+    /* calcul de l'offset physique (offset logique * wordsize) */
+    printf("\tli\t$t%i, %i\n",
+            reg_sizeof_int=cherche_registre_libre(dernier, l),
+            sizeof(int));
+    printf("\tmult\t$t%i, $t%i\n",
+            reg_offset,
+            reg_sizeof_int);
+    printf("\tmflo\t$t%i\n", reg_offset);
+    return reg_offset;
 }
