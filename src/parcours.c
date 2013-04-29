@@ -379,6 +379,9 @@ void sem_n_dec(n_dec *dec) {
     sem_n_type(dec->type);
 
     if (dec->type->type == t_array) {
+        if (contexte == LOCAL) {
+            erreur(__FUNCTION__, "cannot use arrays in local context");
+        }
         ajoute_tableau(dec->nom, dec->type, dec->type->debut, dec->type->fin);
     } else {
         ajoute_variable(dec->nom, dec->type);
