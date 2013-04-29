@@ -7,7 +7,9 @@
 #ifndef __MIPS_H__
 #define __MIPS_H__
 
-void genere_mips();
+#include <stdio.h>
+
+void genere_mips(FILE *sortie);
 
 /* pile apres etre entree dans une fonction
 

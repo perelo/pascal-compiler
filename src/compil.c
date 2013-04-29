@@ -46,18 +46,21 @@ int main(int argc, char **argv) {
     sortie_semantique = fopen(fname, "w");
     sprintf(fname, "%s/%s.c3a", argv[2], ifname);
     FILE *sortie_c3a  = fopen(fname, "w");
+    sprintf(fname, "%s/%s.asm", argv[2], ifname);
+    FILE *sortie_mips = fopen(fname, "w");
 
     MANGER_CC;
     n_prog *prog = ProgramPascal(); // semantique + arbre abstrait
     initialiser_code();
     sem_n_prog (prog);  // table des symboles
     write_code(sortie_c3a);
-    genere_mips();
+    genere_mips(sortie_mips);
 
     fclose(yyin);
     fclose(sortie_syntaxique);
     fclose(sortie_semantique);
     fclose(sortie_c3a);
+    fclose(sortie_mips);
 
     return 0;
 }
