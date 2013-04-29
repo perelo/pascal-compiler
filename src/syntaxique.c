@@ -407,11 +407,9 @@ n_fun_dec *FunctionDefinition (void) {
                              yytext);
     }
     MANGER_CC;
-    if (!(TEST_CC(VAR) || TEST_CC(ID))) {
-        erreur(__FUNCTION__, "expected 'var' or identifier instead of '%s' "
-                             "inside procedure's argument definition", yytext);
+    if (TEST_CC(VAR) || TEST_CC(ID)) {
+        S4 = ArgDefinitionList();
     }
-    S4 = ArgDefinitionList();
     if (!TEST_CC(')')) {
         erreur(__FUNCTION__, "expected ')' instead of '%s' after "
                              "declaring function's arguments", yytext);
@@ -604,11 +602,9 @@ n_appel *ProcedureCall (void) {
                              yytext);
     }
     MANGER_CC;
-    if (!TEST_PREM_EXPR) {
-        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
-                             "in parameters of procedure call", yytext);
+    if (TEST_PREM_EXPR) {
+        S2 = ParameterList();
     }
-    S2 = ParameterList();
     if (!TEST_CC(')')) {
         erreur(__FUNCTION__, "expected ')' instead of '%s' after "
                              "procedure's parameters when calling", yytext);
@@ -632,11 +628,9 @@ n_appel *FunctionCall (void) {
                              yytext);
     }
     MANGER_CC;
-    if (!TEST_PREM_EXPR) {
-        erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
-                             "in parameters of function call", yytext);
+    if (TEST_PREM_EXPR) {
+        S2 = ParameterList();
     }
-    S2 = ParameterList();
     if (!TEST_CC(')')) {
         erreur(__FUNCTION__, "expected ')' instead of '%s' after "
                              "function's parameters when calling", yytext);
