@@ -62,11 +62,10 @@ void initialiser_regs() {
 int cherche_registre_libre(int *dernier, int ligne) {
     int i;
     for (i = 0; i < NB_REGISTRES; ++i) {
-        if (reg[i] == -1 ||
-            dernier[reg[i]] < ligne)
+        if (reg[i] == -1 || dernier[reg[i]] < ligne)
             return i;
     }
-    erreur(__FUNCTION__, "err: no more available registers");
+    erreur(__FUNCTION__, "no more available registers");
     return -1;
 }
 
