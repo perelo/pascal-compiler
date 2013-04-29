@@ -56,7 +56,12 @@ int *creer_derniers_appels() {
 }
 
 void initialiser_regs() {
-    memset(reg, -1, NB_REGISTRES);
+    // memset ne set que les deux premiers registres a -1, les autres a 0 ???
+    //memset(reg, -1, NB_REGISTRES);
+    int i;
+    for (i = 0; i < NB_REGISTRES; ++i) {
+        reg[i] = -1;
+    }
 }
 
 int cherche_registre_libre(int *dernier, int ligne) {
