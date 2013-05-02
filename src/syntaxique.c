@@ -961,6 +961,7 @@ operation AddingOperator (void) {
     } else {
         erreur(__FUNCTION__, "unknown adding operator '%s', "
                              "expected '+' or '-'", yytext);
+        return -1;
     }
 
     balise_text(sortie_syntaxique, "OP", yytext);
@@ -1024,6 +1025,7 @@ operation UnaryRelation (void) {
     } else {
         erreur(__FUNCTION__, "unknown unary relation '%s', available "
                              "operators are '-' and 'not'", yytext);
+        return -1;
     }
     MANGER_CC;
     balise_fermante(sortie_syntaxique, __FUNCTION__);
@@ -1045,6 +1047,7 @@ operation MultiplyingOperator (void) {
     } else {
         erreur(__FUNCTION__, "unknown multiplying operator '%s', available "
                              "operators are '*', 'div' and 'mod'", yytext);
+        return -1;
     }
     MANGER_CC;
     balise_fermante(sortie_syntaxique, __FUNCTION__);
