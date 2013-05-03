@@ -16,7 +16,7 @@
  * FunctionDefinition     -> FUNCTION ID '(' ArgDefinitionList ')' ':' Type ';' BlockBody ';'
  * ArgDefinitionList      -> ArgDefinition { ';' ArgDefinition }
  * ArgDefinition          -> [ VAR ] VariableGroup
- * Statement              -> StatementId | IfStatement | WhileStatement | CompoundStatement | WriteStatement | Empty
+ * Statement              -> StatementId | IfStatement | WhileStatement | CompoundStatement | WriteStatement | IncrStatement | Empty
  * StatementId            -> ID ProcedureCall | AssignmentStatement
  * AssignmentStatement    -> VariableAccess AFFECT Expression
  * ProcedureCall          -> '(' [ ParameterList ] ')'
@@ -26,6 +26,7 @@
  * WhileStatement         -> WHILE Expression DO Statement
  * CompoundStatement      -> BEGIN { Statement ';' } END
  * WriteStatement         -> WRITE '(' Expression ')'
+ * IncrStatement          -> INCR ID VariableAccess [ ',' Expression ]
  * Expression             -> AndExpression [ OR AndExpression ]
  * AndExpression          -> RelationExpression [ AND RelationExpression ]
  * RelationExpression     -> SimpleExpression [ Relation SimpleExpression ]
@@ -521,6 +522,11 @@ n_instr *Statement (void) {
         balise_fermante(sortie_syntaxique, __FUNCTION__);
         return S0;
     }
+    if (TEST_CC(INCR)) {
+        S0 = IncrStatement();
+        balise_fermante(sortie_syntaxique, __FUNCTION__);
+        return S0;
+    }
     S0 = cree_n_instr_vide();
     balise_fermante(sortie_syntaxique, __FUNCTION__);
     return S0;
@@ -803,6 +809,42 @@ n_instr *WriteStatement (void) {
     }
     S0 = cree_n_instr_ecrire(S3);
     MANGER_CC;
+    balise_fermante(sortie_syntaxique, __FUNCTION__);
+    return S0;
+}
+
+// IncrStatement          -> INCR ID VariableAccess ',' Expression
+n_instr *IncrStatement (void) {
+    balise_ouvrante(sortie_syntaxique, __FUNCTION__);
+
+    n_instr *S0 = NULL;
+    n_var   *S3 = NULL;
+    n_exp   *S5 = NULL;
+
+    if (!TEST_CC(INCR)) {
+        erreur(__FUNCTION__, "expected 'incr' instead of '%s' in incr "
+                             "statement", yytext);
+    }
+    MANGER_CC;
+    if (!TEST_CC(ID)) {
+        erreur(__FUNCTION__, "expected identifier instead of '%s' "
+                             "in an incr statement", yytext);
+    }
+    balise_text(sortie_syntaxique, "id", yytext);
+    char *id = malloc(strlen(yytext));
+    strcpy(id, yytext);
+    MANGER_CC;
+    S3 = VariableAccess();
+    S3->nom = id;
+    if (TEST_CC(',')) {
+        MANGER_CC;
+        if (!TEST_PREM_EXPR) {
+            erreur(__FUNCTION__, "expected an expression's premier instead of '%s' "
+                                 "after ',' in incr statement", yytext);
+        }
+        S5 = Expression();
+    }
+    S0 = cree_n_instr_incr(S3, S5);
     balise_fermante(sortie_syntaxique, __FUNCTION__);
     return S0;
 }

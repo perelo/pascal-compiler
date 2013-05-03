@@ -15,16 +15,16 @@
 #include "lexemes.h"
 
 int codeMotClefDefaut = ID;
-char * libelleMotsClefs [] = { "program", "var",   "function", "begin", "end",
-                               "if",      "then",  "else",     "while", "do",
-                               "integer", "array", "read",     "write", "mod",
-                               "div",     "and",   "or",       "true",  "false",
-                               "boolean", "of",    "procedure" };
-int codeMotsClefs [] = { PROGRAM, VAR,   FUNCTION, BEGIN, END,
-                         IF,      THEN,  ELSE,     WHILE, DO,
-                         INTEGER, ARRAY, READ,     WRITE, MOD,
-                         DIV,     AND,   OR,       TRUE,  FALSE,
-                         BOOLEAN, OF,    PROCEDURE };
+char * libelleMotsClefs [] = { "program", "var",   "function",  "begin", "end",
+                               "if",      "then",  "else",      "while", "do",
+                               "integer", "array", "read",      "write", "mod",
+                               "div",     "and",   "or",        "true",  "false",
+                               "boolean", "of",    "procedure", "incr" };
+int codeMotsClefs [] = { PROGRAM, VAR,   FUNCTION,  BEGIN, END,
+                         IF,      THEN,  ELSE,      WHILE, DO,
+                         INTEGER, ARRAY, READ,      WRITE, MOD,
+                         DIV,     AND,   OR,        TRUE,  FALSE,
+                         BOOLEAN, OF,    PROCEDURE, INCR };
 
 int comparerTextAvecMotsClefs() {
     int nbMotsClefs = sizeof(codeMotsClefs) / sizeof(int);

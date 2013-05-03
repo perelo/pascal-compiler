@@ -118,6 +118,15 @@ n_l_exp *cree_n_l_exp(n_exp *tete, n_l_exp *queue) {
     return n;
 }
 
+n_instr *cree_n_instr_incr(n_var *var, n_exp *incr)
+{
+  n_instr *n = malloc(sizeof(n_instr));
+  n->type = incrInst;
+  n->u.incr_.var = var;
+  n->u.incr_.incr = incr;
+  return n;
+}
+
 n_instr *cree_n_instr_si(n_exp *test, n_instr *alors, n_instr *sinon) {
     n_instr *n = malloc(sizeof(n_instr));
     n->type = siInst;

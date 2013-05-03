@@ -46,6 +46,7 @@ n_instr *IfStatement (void);
 n_instr *WhileStatement (void);
 n_instr *CompoundStatement (void);
 n_instr *WriteStatement (void);
+n_instr *IncrStatement (void);
 n_exp   *Expression (void);
 n_exp   *AndExpression (void);
 n_exp   *RelationExpression (void);

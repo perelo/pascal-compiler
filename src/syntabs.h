@@ -104,8 +104,9 @@ n_var *cree_n_var_indicee(char *nom, n_exp *indice);
 /*------ INSTRUCTIONS ------*/
 
 struct n_instr_ {
-    enum {affecteInst, siInst, tantqueInst, appelInst, ecrireInst, videInst, blocInst} type;
+    enum {incrInst, affecteInst, siInst, tantqueInst, appelInst, ecrireInst, videInst, blocInst} type;
     union{
+        struct{n_var *var; n_exp *incr;} incr_;
         struct{n_exp *test; struct n_instr_ *alors; struct n_instr_ *sinon;} si_;
         struct{n_exp *test; struct n_instr_ *faire;} tantque_;
         n_appel *appel;
@@ -116,6 +117,7 @@ struct n_instr_ {
     }u;
 };
 
+n_instr *cree_n_instr_incr(n_var *var, n_exp *incr);
 n_instr *cree_n_instr_si(n_exp *test, n_instr *alors, n_instr *sinon);
 n_instr *cree_n_instr_bloc(n_l_instr *liste);
 n_instr *cree_n_instr_tantque(n_exp *test, n_instr *faire);

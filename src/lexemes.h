@@ -35,6 +35,7 @@
 #define DIV 330
 #define READ 328
 #define WRITE 329
+#define INCR 330
 
 #define NUMERAL 400
 #define ID 401

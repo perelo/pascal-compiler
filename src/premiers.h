@@ -11,8 +11,9 @@
 
 
 #define TEST_PREM_STMT ( \
-    TEST_CC(READ) || TEST_CC(WRITE) || TEST_CC(ID) || \
-    TEST_CC(IF)   || TEST_CC(WHILE) || TEST_CC(BEGIN) \
+    TEST_CC(READ) || TEST_CC(WRITE) || TEST_CC(ID)    || \
+    TEST_CC(IF)   || TEST_CC(WHILE) || TEST_CC(BEGIN) || \
+    TEST_CC(INCR) \
 )
 
 #define TEST_PREM_ATOM ( \

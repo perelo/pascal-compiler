@@ -36,6 +36,9 @@ void sem_n_instr(n_instr *instr) {
     balise_ouvrante(sortie_semantique, __FUNCTION__);
 
     switch (instr->type) {
+    case incrInst:
+        sem_incrInst(instr);
+        break;
     case affecteInst:
         sem_affecteInst(instr);
         break;
@@ -58,6 +61,37 @@ void sem_n_instr(n_instr *instr) {
         sem_blocInst(instr);
         break;
     }
+    balise_fermante(sortie_semantique, __FUNCTION__);
+}
+
+void sem_incrInst(n_instr *instr) {
+    balise_ouvrante(sortie_semantique, __FUNCTION__);
+
+    n_type *type_var  = NULL;
+    n_type *type_incr = NULL;
+
+    if (instr->u.incr_.incr == NULL) {
+        ajoute_ligne(loadimm, 1, 0, NULL);
+    } else {
+        type_incr = sem_n_exp(instr->u.incr_.incr);
+    }
+    int ligneincr = ligne-1;
+    type_var  = sem_n_var(instr->u.incr_.var);
+    int lignevar = ligne-1;
+
+    ajoute_ligne(load, 0, 0, instr->u.incr_.var->nom);
+    code[ligne-1].adresse = symboles.tab[dico_indice_var].adresse;
+    code[ligne-1].mode = symboles.tab[dico_indice_var].mode;
+
+    ajoute_ligne(plus, ligne-1, ligneincr, NULL);
+    if (type_var->type == t_array) {
+        ajoute_ligne(stab, ligne-1, lignevar, instr->u.incr_.var->nom);
+    } else {
+        ajoute_ligne(store, ligne-1, 0, instr->u.incr_.var->nom);
+    }
+    code[ligne-1].adresse = symboles.tab[dico_indice_var].adresse;
+    code[ligne-1].mode = symboles.tab[dico_indice_var].mode;
+
     balise_fermante(sortie_semantique, __FUNCTION__);
 }
 
